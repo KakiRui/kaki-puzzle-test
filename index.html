@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaki Puzzle Tool</title>
+    <style>
+        :root {
+            --bg: #F9F4F0; /* 复古象牙白 */
+            --accent-pink: #F5D5D5; /* 蓬帕杜粉 */
+            --accent-blue: #D1E1E4; /* 凡尔赛青 */
+            --text-brown: #6D5D5D; /* 复古棕 */
+            --btn-pink-brown: #C49A9A; /* 粉棕色 (用于调换按钮) */
+            --panel-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-brown);
+            margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container { width: 100%; max-width: 600px; }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--accent-pink);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(109, 93, 93, 0.08);
+            margin-bottom: 20px;
+        }
+
+        h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: 600; margin-top: 0; }
+
+        .section-header { 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.9rem; font-weight: bold; color: #9A8282; 
+            margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); 
+        }
+
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full-width { grid-column: span 2; }
+        
+        label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
+        input[type="number"], select {
+            width: 100%; padding: 10px; border: 1px solid var(--accent-blue);
+            border-radius: 10px; box-sizing: border-box; background: white;
+            color: var(--text-brown); outline: none; transition: 0.3s;
+        }
+        input[type="color"] { width: 100%; height: 40px; border: none; border-radius: 10px; cursor: pointer; padding: 0; background: none; }
+
+        /* 素材预览区 */
+        .preview-pool {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto;
+            background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px;
+            border: 1px dashed var(--accent-pink);
+        }
+        
+        .thumb-wrapper { position: relative; cursor: pointer; transition: 0.2s; }
+        .thumb-wrapper.swap-active { border: 2px solid var(--btn-pink-brown); border-radius: 8px; transform: scale(0.95); }
+        .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
+        .thumb-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--text-brown); color: white;
+            font-size: 0.6rem; width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold; border: 1px solid white;
+        }
+
+        /* 按钮 */
+        .btn-main {
+            width: 100%; padding: 14px; background: var(--accent-pink);
+            color: var(--text-brown); border: none; border-radius: 20px;
+            font-size: 0.95rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(245, 213, 213, 0.6); transition: 0.2s;
+        }
+        .btn-main:active { transform: translateY(2px); }
+        .btn-swap { background: var(--btn-pink-brown); color: white; margin-bottom: 8px; }
+        .btn-swap.active { background: #A07878; box-shadow: inset 0 3px 5px rgba(0,0,0,0.1); }
+        .btn-clear { background: var(--accent-blue); }
+
+        /* 字体预览 */
+        .font-preview-box {
+            height: 60px; background: #EFEBE9; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; border: 1px dashed var(--btn-pink-brown);
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(109, 93, 93, 0.7); z-index: 1000;
+            align-items: center; justify-content: center; backdrop-filter: blur(3px);
+        }
+        .modal-box {
+            background: var(--bg); padding: 20px; border-radius: 20px;
+            width: 85%; max-width: 320px; text-align: center;
+            border: 2px solid var(--accent-pink); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .modal-box img { width: 100%; border-radius: 10px; max-height: 50vh; object-fit: contain; background: #fff; margin-bottom: 15px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-btns button { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-confirm { background: var(--btn-pink-brown); color: white; }
+        .btn-cancel { background: #ddd; color: var(--text-brown); }
+
+        /* 隐藏功能开关 */
+        .toggle-switch {
+            appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px;
+            position: relative; cursor: pointer; outline: none;
+        }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+            background: white; border-radius: 50%; transition: 0.3s;
+        }
+        .toggle-switch:checked { background: var(--accent-pink); }
+        .toggle-switch:checked::after { left: 22px; }
+
+        #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>Kaki Puzzle Tool</h2>
+        
+        <div class="section-header">
+            <span>图片导入</span>
+            <input type="file" id="fileInput" multiple accept="image/*" style="font-size: 0.7rem; width: 180px;">
+        </div>
+        <div class="preview-pool" id="pool"></div>
+        
+        <div style="margin-top: 15px;">
+            <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">开启调换图片排序</button>
+            <button class="btn-main btn-clear" onclick="clearStorage()">清空已存图片</button>
+        </div>
+
+        <div class="section-header"><span>拼图参数</span></div>
+        <div class="control-grid">
+            <div><label>导出画质 (20-100%)</label><input type="number" id="quality" value="80" min="20" max="100"></div>
+            <div><label>自定义比例 (宽:高)</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" id="ratioW" value="1" placeholder="宽">
+                    <input type="number" id="ratioH" value="1" placeholder="高">
+                </div>
+            </div>
+            <div><label>行数</label><input type="number" id="rows" value="3"></div>
+            <div><label>列数</label><input type="number" id="cols" value="3"></div>
+        </div>
+
+        <div class="section-header">
+            <span>编号调整</span>
+            <input type="checkbox" class="toggle-switch" id="numEnable" checked onchange="toggleNumSection()">
+        </div>
+        
+        <div id="numSettings">
+            <div class="control-grid" style="margin-bottom: 10px;">
+                <div class="full-width"><label>起始编号</label><input type="number" id="startNum" value="1" oninput="updatePreview()"></div>
+                <div><label>字体颜色</label><input type="color" id="fColor" value="#000000" oninput="updatePreview()"></div>
+                <div><label>字体大小</label><input type="number" id="fSize" value="40" oninput="updatePreview()"></div>
+                
+                <div>
+                    <label>描边</label>
+                    <select id="sEnable" onchange="updatePreview()">
+                        <option value="no">关闭</option><option value="yes">开启</option>
+                    </select>
+                </div>
+                <div><label>描边颜色</label><input type="color" id="sColor" value="#FFFFFF" oninput="updatePreview()"></div>
+                
+                <div>
+                    <label>编号位置</label>
+                    <select id="pos">
+                        <option value="rb">右下</option><option value="lb">左下</option>
+                        <option value="rt">右上</option><option value="lt">左上</option>
+                        <option value="cc">中心</option>
+                    </select>
+                </div>
+                <div><label>字体阴影</label><select id="shEnable" onchange="updatePreview()"><option value="no">无</option><option value="yes">有</option></select></div>
+            </div>
+            
+            <label>效果预览：</label>
+            <div class="font-preview-box" id="previewBox">
+                <span id="previewText">1</span>
+            </div>
+        </div>
+
+        <button class="btn-main" style="margin-top: 20px;" onclick="generate()">生成拼图</button>
+    </div>
+
+    <div id="resultContainer"></div>
+</div>
+
+<div class="modal-overlay" id="viewModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown); font-size: 1rem;">图片预览</h3>
+        <img id="modalImg" src="">
+        <input type="file" id="replaceInput" accept="image/*" style="display:none" onchange="handleReplaceFile(event)">
+        <div class="modal-btns">
+            <button class="btn-confirm" onclick="document.getElementById('replaceInput').click()">替换图片</button>
+            <button class="btn-cancel" onclick="closeModal('viewModal')">关闭</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="swapModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown); font-size: 1rem;">🌸 调换排序</h3>
+        <p id="swapText" style="font-size: 0.85rem; line-height: 1.5; color: #888;">是否将图片X和图片Y进行调换？</p>
+        <div class="modal-btns">
+            <button class="btn-confirm" onclick="confirmSwap()">确定调换</button>
+            <button class="btn-cancel" onclick="closeModal('swapModal'); exitSwapMode();">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db;
+    let currentFiles = []; // 内存中维护的文件列表
+    let isSwapMode = false;
+    let swapSelection = [];
+    let currentViewIndex = -1;
+
+    // 1. 初始化 IndexedDB
+    const request = indexedDB.open("KakiDB", 1);
+    request.onupgradeneeded = e => {
+        const database = e.target.result;
+        if(!database.objectStoreNames.contains("store")) {
+            database.createObjectStore("store");
+        }
+    };
+    request.onsuccess = e => { 
+        db = e.target.result; 
+        loadFromDB(); 
+        updatePreview();
+    };
+
+    // 2. 数据库读写封装
+    function saveToDB() {
+        const tx = db.transaction("store", "readwrite");
+        tx.objectStore("store").put(currentFiles, "imageList");
+        tx.oncomplete = renderPool;
+    }
+
+    function loadFromDB() {
+        const tx = db.transaction("store", "readonly");
+        const req = tx.objectStore("store").get("imageList");
+        req.onsuccess = e => {
+            if(e.target.result) { currentFiles = e.target.result; }
+            renderPool();
+        };
+    }
+
+    // 3. 核心交互：渲染缩略图
+    function renderPool() {
+        const pool = document.getElementById('pool');
+        pool.innerHTML = "";
+        currentFiles.forEach((file, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'thumb-wrapper';
+            wrapper.onclick = () => handleThumbClick(index, wrapper);
+            
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            
+            const badge = document.createElement('div');
+            badge.className = 'thumb-badge';
+            badge.innerText = index + 1; // 真实序号角标
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(badge);
+            pool.appendChild(wrapper);
+        });
+    }
+
+    document.getElementById('fileInput').onchange = (e) => {
+        const files = Array.from(e.target.files);
+        currentFiles = currentFiles.concat(files);
+        saveToDB();
+        e.target.value = ""; // 清空input方便重复传同名
+    };
+
+    function clearStorage() {
+        currentFiles = [];
+        saveToDB();
+        document.getElementById('resultContainer').innerHTML = "";
+    }
+
+    // 4. 图片交互：放大/替换 与 调换排序
+    function handleThumbClick(index, element) {
+        if (isSwapMode) {
+            // 调换逻辑
+            if (swapSelection.includes(index)) return; // 防连点
+            swapSelection.push(index);
+            element.classList.add('swap-active');
+            
+            if (swapSelection.length === 2) {
+                document.getElementById('swapText').innerText = `是否将 第 ${swapSelection[0] + 1} 张图片\n和 第 ${swapSelection[1] + 1} 张图片\n进行位置调换？`;
+                document.getElementById('swapModal').style.display = 'flex';
+            }
+        } else {
+            // 放大逻辑
+            currentViewIndex = index;
+            document.getElementById('modalImg').src = URL.createObjectURL(currentFiles[index]);
+            document.getElementById('viewModal').style.display = 'flex';
+        }
+    }
+
+    function toggleSwapMode() {
+        isSwapMode = !isSwapMode;
+        const btn = document.getElementById('swapBtn');
+        swapSelection = []; // 清空选中
+        renderPool(); // 刷新状态
+        
+        if (isSwapMode) {
+            btn.innerText = "退出调换模式 (请点击两张图)";
+            btn.classList.add('active');
+        } else {
+            btn.innerText = "开启调换图片排序";
+            btn.classList.remove('active');
+        }
+    }
+
+    function confirmSwap() {
+        const [i, j] = swapSelection;
+        // 交换数组元素
+        const temp = currentFiles[i];
+        currentFiles[i] = currentFiles[j];
+        currentFiles[j] = temp;
+        
+        closeModal('swapModal');
+        exitSwapMode();
+        saveToDB();
+    }
+
+    function exitSwapMode() {
+        isSwapMode = false;
+        document.getElementById('swapBtn').innerText = "开启调换图片排序";
+        document.getElementById('swapBtn').classList.remove('active');
+        swapSelection = [];
+        renderPool();
+    }
+
+    function handleReplaceFile(e) {
+        if(e.target.files.length > 0 && currentViewIndex > -1) {
+            currentFiles[currentViewIndex] = e.target.files[0];
+            saveToDB();
+            closeModal('viewModal');
+            e.target.value = "";
+        }
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // 5. 编号功能控制
+    function toggleNumSection() {
+        const isEnabled = document.getElementById('numEnable').checked;
+        document.getElementById('numSettings').style.display = isEnabled ? 'block' : 'none';
+    }
+
+    function updatePreview() {
+        const text = document.getElementById('previewText');
+        const box = document.getElementById('previewBox');
+        
+        text.innerText = document.getElementById('startNum').value;
+        text.style.fontSize = document.getElementById('fSize').value + 'px';
+        text.style.color = document.getElementById('fColor').value;
+        text.style.fontWeight = 'bold';
+        
+        // 描边通过文字阴影模拟，实现纯 CSS 预览效果
+        const strokeColor = document.getElementById('sColor').value;
+        let shadowCSS = [];
+        
+        if (document.getElementById('sEnable').value === 'yes') {
+            shadowCSS.push(`-1px -1px 0 ${strokeColor}, 1px -1px 0 ${strokeColor}, -1px 1px 0 ${strokeColor}, 1px 1px 0 ${strokeColor}`);
+        }
+        if (document.getElementById('shEnable').value === 'yes') {
+            shadowCSS.push('2px 5px 5px rgba(0,0,0,0.4)');
+        }
+        
+        text.style.textShadow = shadowCSS.length > 0 ? shadowCSS.join(', ') : 'none';
+    }
+
+    // 6. 画布生成引擎
+    async function generate() {
+        if (currentFiles.length === 0) return alert("宝贝，请先导入图片哦~");
+        
+        const container = document.getElementById('resultContainer');
+        container.innerHTML = "生成中...";
+        
+        const rW = parseFloat(document.getElementById('ratioW').value);
+        const rH = parseFloat(document.getElementById('ratioH').value);
+        const rows = parseInt(document.getElementById('rows').value);
+        const cols = parseInt(document.getElementById('cols').value);
+        const q = parseInt(document.getElementById('quality').value) / 100;
+        
+        const isNumEnabled = document.getElementById('numEnable').checked;
+        const startNum = parseInt(document.getElementById('startNum').value);
+        
+        const itemW = 400; 
+        const itemH = itemW * (rH / rW);
+        const perPage = rows * cols;
+        container.innerHTML = "";
+
+        for (let i = 0; i < currentFiles.length; i += perPage) {
+            const canvas = document.createElement('canvas');
+            canvas.width = cols * itemW;
+            canvas.height = rows * itemH;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+            for (let j = 0; j < perPage; j++) {
+                const idx = i + j;
+                if (idx >= currentFiles.length) break;
+                
+                const img = await loadImage(URL.createObjectURL(currentFiles[idx]));
+                const x = (j % cols) * itemW;
+                const y = Math.floor(j / cols) * itemH;
+                
+                drawCover(ctx, img, x, y, itemW, itemH);
+                if (isNumEnabled) {
+                    drawText(ctx, startNum + idx, x, y, itemW, itemH);
+                }
+            }
+            const resImg = document.createElement('img');
+            resImg.src = canvas.toDataURL("image/jpeg", q);
+            container.appendChild(resImg);
+        }
+    }
+
+    function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
+
+    function drawCover(ctx, img, x, y, w, h) {
+        const iR = img.width / img.height, tR = w / h;
+        let sx, sy, sw, sh;
+        if (iR > tR) { sh = img.height; sw = sh * tR; sx = (img.width - sw) / 2; sy = 0; }
+        else { sw = img.width; sh = sw / tR; sx = 0; sy = (img.height - sh) / 2; }
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    }
+
+    function drawText(ctx, text, x, y, w, h) {
+        const size = parseInt(document.getElementById('fSize').value);
+        ctx.font = `bold ${size}px sans-serif`; // 默认系统字体
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        
+        if(document.getElementById('shEnable').value === 'yes') {
+            ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 8;
+        } else { ctx.shadowBlur = 0; }
+
+        let tx, ty, p = size * 0.8;
+        const pos = document.getElementById('pos').value;
+        if (pos === 'lt') { tx = x + p; ty = y + p; }
+        else if (pos === 'rt') { tx = x + w - p; ty = y + p; }
+        else if (pos === 'lb') { tx = x + p; ty = y + h - p; }
+        else if (pos === 'rb') { tx = x + w - p; ty = y + h - p; }
+        else { tx = x + w/2; ty = y + h/2; }
+
+        if(document.getElementById('sEnable').value === 'yes') {
+            ctx.strokeStyle = document.getElementById('sColor').value;
+            ctx.lineWidth = size / 6; ctx.strokeText(text, tx, ty);
+        }
+        ctx.fillStyle = document.getElementById('fColor').value;
+        ctx.fillText(text, tx, ty);
+        ctx.shadowBlur = 0;
+    }
+</script>
+</body>
+</html>
