@@ -10,7 +10,7 @@
             --accent-pink: #F5D5D5; 
             --accent-blue: #D1E1E4; 
             --text-brown: #6D5D5D; 
-            --btn-swap-pink: #D8A7A7; /* 调优后的深豆沙粉棕 */
+            --btn-swap-pink: #D8A7A7; 
             --panel-bg: rgba(255, 255, 255, 0.85);
         }
 
@@ -41,7 +41,6 @@
             margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); 
         }
 
-        /* 隐藏原生上传文字 */
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; }
@@ -56,7 +55,6 @@
             color: var(--text-brown); outline: none;
         }
 
-        /* 颜色选择器改成正方形 */
         input[type="color"] { 
             -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); 
             border-radius: 4px; cursor: pointer; padding: 0; background: none; overflow: hidden;
@@ -64,54 +62,44 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; }
 
-        /* 素材预览区 */
+        /* 滑块样式 */
+        input[type="range"] { width: 100%; appearance: none; background: transparent; padding: 0; margin: 12px 0; }
+        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; cursor: pointer; }
+
+        /* 新增：编号调整的排版样式 */
+        .setting-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+        .setting-row > .flex-1 { flex: 1; }
+        .setting-row > .color-wrap { flex: 0 0 45px; display: flex; flex-direction: column; align-items: center; }
+        .sub-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; margin: 10px 0 5px; color: var(--text-brown); }
+
         .preview-pool {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
             gap: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto;
-            background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px;
-            border: 1px dashed var(--accent-pink);
+            background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink);
         }
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper.swap-active { border: 2px solid var(--btn-swap-pink); border-radius: 8px; transform: scale(0.95); }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
-        .thumb-badge {
-            position: absolute; top: -5px; right: -5px;
-            background: var(--text-brown); color: white;
-            font-size: 0.6rem; width: 16px; height: 16px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; font-weight: bold; border: 1px solid white;
-        }
+        .thumb-badge { position: absolute; top: -5px; right: -5px; background: var(--text-brown); color: white; font-size: 0.6rem; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; border: 1px solid white; }
 
-        /* 按钮 */
-        .btn-main {
-            width: 100%; padding: 14px; background: var(--accent-pink);
-            color: var(--text-brown); border: none; border-radius: 20px;
-            font-size: 0.95rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(245, 213, 213, 0.4); margin-bottom: 10px;
-        }
+        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(245, 213, 213, 0.4); margin-bottom: 10px; }
         .btn-swap { background: var(--btn-swap-pink); color: white; }
         .btn-swap.active { filter: brightness(0.9); }
         .btn-clear { background: var(--accent-blue); }
 
-        /* 弹窗与开关 */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(109, 93, 93, 0.7); z-index: 1000; align-items: center; justify-content: center;
-        }
-        .modal-box {
-            background: var(--bg); padding: 20px; border-radius: 20px;
-            width: 85%; max-width: 320px; text-align: center; border: 2px solid var(--accent-pink);
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(109, 93, 93, 0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; border: 2px solid var(--accent-pink); }
         .modal-box img { width: 100%; border-radius: 10px; max-height: 50vh; object-fit: contain; background: #fff; margin-bottom: 15px; }
         .modal-btns { display: flex; gap: 10px; }
         .modal-btns button { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold; }
         
-        .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
+        .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; flex-shrink: 0; }
         .toggle-switch:checked { background: var(--accent-pink); }
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
 
-        .font-preview-box { height: 60px; background: #EFEBE9; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
+        .font-preview-box { height: 80px; background: #EFEBE9; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -160,23 +148,66 @@
         </div>
         
         <div id="numSettings">
-            <div class="control-grid" style="margin-bottom: 10px; align-items: end;">
-                <div><label>字体颜色</label><input type="color" id="fColor" value="#000000" oninput="updatePreview()"></div>
-                <div><label>字体大小</label><input type="number" id="fSize" value="40" oninput="updatePreview()"></div>
-                <div class="full-width"><label>字体透明度 (0-1)</label><input type="number" id="fAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
-                
-                <div class="full-width"><label>起始编号</label><input type="number" id="startNum" value="1" oninput="updatePreview()"></div>
-                
-                <div>
-                    <label>描边</label>
-                    <select id="sEnable" onchange="updatePreview()">
-                        <option value="no">关闭</option><option value="yes">开启</option>
+            <div style="margin-bottom: 10px;">
+                <label>起始编号</label>
+                <input type="number" id="startNum" value="1" oninput="updatePreview()">
+            </div>
+
+            <div class="setting-row">
+                <div class="flex-1">
+                    <label>字体选择</label>
+                    <select id="fontFamily" onchange="updatePreview()">
+                        <option value="sans-serif">系统黑体</option>
+                        <option value="'Palatino', 'Georgia', serif">复古花体</option>
+                        <option value="'SimSun', 'STSong', serif">经典宋体</option>
                     </select>
                 </div>
-                <div><label>描边粗细</label><input type="number" id="sWidth" value="5" oninput="updatePreview()"></div>
-                <div><label>描边颜色</label><input type="color" id="sColor" value="#000000" oninput="updatePreview()"></div>
-                
-                <div>
+                <div class="flex-1">
+                    <label>字体不透明度</label>
+                    <input type="range" id="fAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()">
+                </div>
+                <div class="color-wrap">
+                    <label>颜色</label>
+                    <input type="color" id="fColor" value="#000000" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <div class="sub-header">
+                <span>描边</span>
+                <input type="checkbox" class="toggle-switch" id="sEnable" onchange="toggleStroke(); updatePreview()">
+            </div>
+            <div class="setting-row" id="strokeSettings" style="display: none;">
+                <div class="flex-1">
+                    <label>描边粗细</label>
+                    <input type="number" id="sWidth" value="5" oninput="updatePreview()">
+                </div>
+                <div class="flex-1">
+                    <label>描边不透明度</label>
+                    <input type="range" id="sAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()">
+                </div>
+                <div class="color-wrap">
+                    <label>颜色</label>
+                    <input type="color" id="sColor" value="#000000" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <div class="sub-header">
+                <span>字体阴影</span>
+                <input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadow(); updatePreview()">
+            </div>
+            <div class="setting-row" id="shadowSettings" style="display: none;">
+                <div class="flex-1">
+                    <label>阴影不透明度</label>
+                    <input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()">
+                </div>
+                <div class="color-wrap">
+                    <label>颜色</label>
+                    <input type="color" id="shColor" value="#000000" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <div class="flex-1">
                     <label>编号位置</label>
                     <select id="pos">
                         <option value="rb">右下</option><option value="lb">左下</option>
@@ -184,8 +215,12 @@
                         <option value="cc">中心</option>
                     </select>
                 </div>
-                <div><label>字体阴影</label><select id="shEnable" onchange="updatePreview()"><option value="no">无</option><option value="yes">有</option></select></div>
+                <div class="flex-1">
+                    <label>编号大小</label>
+                    <input type="number" id="fSize" value="40" oninput="updatePreview()">
+                </div>
             </div>
+
             <div class="font-preview-box" id="previewBox"><span id="previewText">1</span></div>
         </div>
 
@@ -229,24 +264,41 @@
     }
 
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; }
+    function toggleStroke() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; }
+    function toggleShadow() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; }
 
     function updatePreview() {
         const text = document.getElementById('previewText');
+        
+        // 字体预览
         const color = document.getElementById('fColor').value;
         const alpha = document.getElementById('fAlpha').value;
-        
-        // 转换 Hex 到 RGBA
         const r = parseInt(color.slice(1,3), 16), g = parseInt(color.slice(3,5), 16), b = parseInt(color.slice(5,7), 16);
         text.style.color = `rgba(${r},${g},${b},${alpha})`;
         text.innerText = document.getElementById('startNum').value;
         text.style.fontSize = document.getElementById('fSize').value + 'px';
+        text.style.fontFamily = document.getElementById('fontFamily').value;
         
-        const sColor = document.getElementById('sColor').value;
-        const sWidth = document.getElementById('sWidth').value;
-        let shadow = [];
-        if(document.getElementById('sEnable').value === 'yes') shadow.push(`0 0 ${sWidth}px ${sColor}`);
-        if(document.getElementById('shEnable').value === 'yes') shadow.push('2px 4px 6px rgba(0,0,0,0.3)');
-        text.style.textShadow = shadow.join(', ');
+        // 描边预览 (利用 webkitTextStroke)
+        if(document.getElementById('sEnable').checked) {
+            const sColor = document.getElementById('sColor').value;
+            const sAlpha = document.getElementById('sAlpha').value;
+            const sW = document.getElementById('sWidth').value;
+            const sr = parseInt(sColor.slice(1,3), 16), sg = parseInt(sColor.slice(3,5), 16), sb = parseInt(sColor.slice(5,7), 16);
+            text.style.webkitTextStroke = `${sW}px rgba(${sr},${sg},${sb},${sAlpha})`;
+        } else {
+            text.style.webkitTextStroke = '0';
+        }
+
+        // 阴影预览
+        if(document.getElementById('shEnable').checked) {
+            const shColor = document.getElementById('shColor').value;
+            const shAlpha = document.getElementById('shAlpha').value;
+            const shr = parseInt(shColor.slice(1,3), 16), shg = parseInt(shColor.slice(3,5), 16), shb = parseInt(shColor.slice(5,7), 16);
+            text.style.textShadow = `2px 4px 6px rgba(${shr},${shg},${shb},${shAlpha})`;
+        } else {
+            text.style.textShadow = 'none';
+        }
     }
 
     async function generate() {
@@ -270,7 +322,6 @@
             const currentCols = Math.min(remaining, cols);
 
             const canvas = document.createElement('canvas');
-            // 智能逻辑：根据剩余图片计算画布宽高，不再留白
             canvas.width = currentCols * itemW;
             canvas.height = currentRows * itemH;
             
@@ -298,11 +349,12 @@
 
     function drawText(ctx, text, x, y, w, h) {
         const size = parseInt(document.getElementById('fSize').value);
+        const font = document.getElementById('fontFamily').value;
         const color = document.getElementById('fColor').value;
         const alpha = document.getElementById('fAlpha').value;
         const r = parseInt(color.slice(1,3), 16), g = parseInt(color.slice(3,5), 16), b = parseInt(color.slice(5,7), 16);
         
-        ctx.font = `bold ${size}px Palatino, Georgia, serif`;
+        ctx.font = `bold ${size}px ${font}`;
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
         
         let tx, ty, p = size * 0.8;
@@ -313,18 +365,38 @@
         else if (pos === 'rb') { tx = x + w - p; ty = y + h - p; }
         else { tx = x + w/2; ty = y + h/2; }
 
-        if(document.getElementById('shEnable').value === 'yes') { ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 8; }
-        if(document.getElementById('sEnable').value === 'yes') {
-            ctx.strokeStyle = document.getElementById('sColor').value;
+        // 阴影
+        if(document.getElementById('shEnable').checked) { 
+            const shColor = document.getElementById('shColor').value;
+            const shAlpha = document.getElementById('shAlpha').value;
+            const shr = parseInt(shColor.slice(1,3), 16), shg = parseInt(shColor.slice(3,5), 16), shb = parseInt(shColor.slice(5,7), 16);
+            ctx.shadowColor = `rgba(${shr},${shg},${shb},${shAlpha})`; 
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 4;
+        } else {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // 描边
+        if(document.getElementById('sEnable').checked) {
+            const sColor = document.getElementById('sColor').value;
+            const sAlpha = document.getElementById('sAlpha').value;
+            const sr = parseInt(sColor.slice(1,3), 16), sg = parseInt(sColor.slice(3,5), 16), sb = parseInt(sColor.slice(5,7), 16);
+            ctx.strokeStyle = `rgba(${sr},${sg},${sb},${sAlpha})`;
             ctx.lineWidth = document.getElementById('sWidth').value;
             ctx.strokeText(text, tx, ty);
         }
+        
         ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.fillText(text, tx, ty);
-        ctx.shadowBlur = 0;
+        
+        ctx.shadowBlur = 0; // 重置
     }
 
-    // 辅助函数保持原样
     function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
     function handleThumbClick(i, el) { if(isSwapMode){ if(swapSelection.includes(i))return; swapSelection.push(i); el.classList.add('swap-active'); if(swapSelection.length===2){ document.getElementById('swapText').innerText=`是否调换第 ${swapSelection[0]+1} 张与第 ${swapSelection[1]+1} 张？`; document.getElementById('swapModal').style.display='flex'; } }else{ currentViewIndex=i; document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); document.getElementById('viewModal').style.display='flex'; }}
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); const b = document.getElementById('swapBtn'); b.innerText = isSwapMode ? "请点击两张图" : "调换图片"; b.classList.toggle('active', isSwapMode); }
