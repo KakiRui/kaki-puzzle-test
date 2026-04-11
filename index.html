@@ -36,7 +36,7 @@
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
         .font-preview-box { height: 120px; background: #EFEBE9; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; }
-        #previewCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #previewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(109, 93, 93, 0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
@@ -51,7 +51,7 @@
         <div class="preview-pool" id="pool"></div>
         <div style="margin-top: 15px;">
             <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
-            <button class="btn-main btn-clear" style="background:var(--accent-blue)" onclick="clearStorage()">清空已存图片</button>
+            <button class="btn-main" style="background:var(--accent-blue)" onclick="clearStorage()">清空已存图片</button>
         </div>
 
         <div class="section-header"><span>拼图参数</span></div>
@@ -70,17 +70,20 @@
                 <div style="flex:1"><label>不透明度</label><input type="range" id="fAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="fColor" value="#000000" oninput="updatePreview()"></div>
             </div>
-            <div class="section-header" style="border:none; margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="updatePreview()"></div>
-            <div class="setting-row">
+            
+            <div class="section-header" style="border:none; margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
+            <div id="strokeSettings" class="setting-row">
                 <div style="flex:2"><label>描边粗细</label><input type="number" id="sWidth" value="15" oninput="updatePreview()"></div>
                 <div style="flex:1"><label>不透明度</label><input type="range" id="sAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="sColor" value="#FFFFFF" oninput="updatePreview()"></div>
             </div>
-            <div class="section-header" style="border:none; margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="updatePreview()"></div>
-            <div class="setting-row">
+
+            <div class="section-header" style="border:none; margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
+            <div id="shadowSettings" class="setting-row" style="display:none">
                 <div style="flex:1"><label>阴影不透明度</label><input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#000000" oninput="updatePreview()"></div>
             </div>
+
             <div class="setting-row">
                 <div style="flex:1"><label>编号位置</label><select id="pos" onchange="updatePreview()"><option value="rb">右下</option><option value="lb">左下</option><option value="rt">右上</option><option value="lt">左上</option><option value="cc">中心</option></select></div>
                 <div style="flex:1"><label>编号大小</label><input type="number" id="fSize" value="150" oninput="updatePreview()"></div>
@@ -96,7 +99,7 @@
 <div class="modal-overlay" id="swapModal"><div class="modal-box"><h3>调换排序</h3><p id="swapText"></p><div style="display:flex; gap:10px;"><button class="btn-main btn-swap" onclick="confirmSwap()">确定</button><button class="btn-main" style="background:#ddd" onclick="closeModal('swapModal'); exitSwapMode();">取消</button></div></div></div>
 
 <script>
-    let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentViewIndex = -1;
+    let db, currentFiles = [], isSwapMode = false, swapSelection = [];
     const request = indexedDB.open("KakiDB", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
     request.onsuccess = e => { db = e.target.result; loadFromDB(); };
@@ -116,10 +119,13 @@
 
     document.getElementById('fileInput').onchange = (e) => { currentFiles = currentFiles.concat(Array.from(e.target.files)); saveToDB(); e.target.value = ""; };
     function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; }
-    function toggleRatioInput() { const val = document.getElementById('ratioSelect').value; document.getElementById('customRatioUI').style.display = (val === 'custom') ? 'grid' : 'none'; }
-    function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; }
+    
+    function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
+    function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
+    function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
+    function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
 
-    // 核心修复：真实位置预览 + 安全边距逻辑
+    // 核心修复：支持真实位置预览的同时，恢复自适应比例缩放
     function updatePreview() {
         const canvas = document.getElementById('previewCanvas');
         const box = document.getElementById('previewBox');
@@ -134,23 +140,30 @@
         const fSize = parseInt(document.getElementById('fSize').value) || 150;
         const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
         
-        // 预览缩放比例（模拟 1000px 的拼图单图）
-        const previewScale = rect.width / 1000;
         ctx.save();
+        
+        // 关键逻辑：预览自适应。如果字体设得很小，预览里不能真的只有几个像素。
+        // 我们设定一个“预览参考画幅”为 1000px，计算当前的缩放比例。
+        let previewScale = rect.width / 1000;
+        
+        // 增强：如果字体大小小于 100，在预览里额外放大，防止看不清
+        if (fSize < 100) {
+            const extraZoom = 1.5; // 预览放大系数
+            previewScale *= extraZoom;
+        }
+
         ctx.scale(previewScale, previewScale);
 
-        // 调用统一的绘制逻辑
+        // 调用统一的绘制逻辑（模拟真实拼图的 1000px 环境）
         drawComplexText(ctx, text, 1000, 1000 * (rect.height/rect.width), fSize, sWidth);
         ctx.restore();
     }
 
-    // 统一绘制函数：处理安全边距、位置锚点
     function drawComplexText(ctx, text, w, h, size, sWidth) {
         const font = document.getElementById('fontFamily').value;
         ctx.font = `bold ${size}px ${font}`;
         ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
         
-        // 计算安全边距：字体一半 + 描边一半 + 阴影余量
         const shadowOffset = document.getElementById('shEnable').checked ? 15 : 0;
         const safetyPadding = (size * 0.5) + (sWidth * 0.5) + shadowOffset + 20;
 
@@ -162,32 +175,25 @@
         else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
         else { cx = w/2; cy = h/2; }
 
-        // 1. 绘制阴影 (防止飘走)
         if(document.getElementById('shEnable').checked) {
-            const shC = document.getElementById('shColor').value, shA = document.getElementById('shAlpha').value;
-            const rgb = hexToRgb(shC);
+            const rgb = hexToRgb(document.getElementById('shColor').value);
             ctx.save();
-            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${shA})`;
+            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${document.getElementById('shAlpha').value})`;
             ctx.shadowBlur = 15; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-            // 阴影必须附着在描边或文字上
             if(sWidth > 0) { ctx.lineWidth = sWidth; ctx.strokeStyle = "black"; ctx.strokeText(text, cx, cy); }
             ctx.fillStyle = "black"; ctx.fillText(text, cx, cy);
             ctx.restore();
         }
 
-        // 2. 绘制描边
         if(sWidth > 0) {
-            const sC = document.getElementById('sColor').value, sA = document.getElementById('sAlpha').value;
-            const rgb = hexToRgb(sC);
-            ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${sA})`;
+            const rgb = hexToRgb(document.getElementById('sColor').value);
+            ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${document.getElementById('sAlpha').value})`;
             ctx.lineWidth = sWidth;
             ctx.strokeText(text, cx, cy);
         }
         
-        // 3. 绘制主体文字
-        const fC = document.getElementById('fColor').value, fA = document.getElementById('fAlpha').value;
-        const rgbF = hexToRgb(fC);
-        ctx.fillStyle = `rgba(${rgbF.r},${rgbF.g},${rgbF.b},${fA})`;
+        const rgbF = hexToRgb(document.getElementById('fColor').value);
+        ctx.fillStyle = `rgba(${rgbF.r},${rgbF.g},${rgbF.b},${document.getElementById('fAlpha').value})`;
         ctx.fillText(text, cx, cy);
     }
 
@@ -240,7 +246,7 @@
         return {r, g, b};
     }
     function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
-    function handleThumbClick(i, el) { if(isSwapMode){ if(swapSelection.includes(i))return; swapSelection.push(i); if(swapSelection.length===2){ document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; document.getElementById('swapModal').style.display='flex'; } }else{ currentViewIndex=i; document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); document.getElementById('viewModal').style.display='flex'; }}
+    function handleThumbClick(i, el) { if(isSwapMode){ if(swapSelection.includes(i))return; swapSelection.push(i); if(swapSelection.length===2){ document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; document.getElementById('swapModal').style.display='flex'; } }else{ document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); document.getElementById('viewModal').style.display='flex'; }}
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
     function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
