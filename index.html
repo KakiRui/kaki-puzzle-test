@@ -71,13 +71,12 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; }
 
-        /* 滑块样式：根据反馈修复对齐 */
         input[type="range"] { 
             width: 85%; 
             appearance: none; 
             background: transparent; 
             padding: 0; 
-            margin: 15px 0 0 4px; /* 这里的 15px margin-top 确保滑块与左侧输入框对齐 */
+            margin: 15px 0 0 4px; 
             display: block; 
         }
         input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; }
@@ -91,7 +90,7 @@
             display: flex; justify-content: space-between; align-items: center; 
             font-size: 0.8rem; font-weight: bold; color: var(--text-brown); 
             margin: 15px 0 10px; padding-top: 15px; 
-            border-top: 1px solid rgba(216, 167, 167, 0.15); /* 极浅分割线 */
+            border-top: 1px solid rgba(216, 167, 167, 0.15); 
         }
 
         .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(245, 213, 213, 0.4); margin-bottom: 10px; }
@@ -150,7 +149,7 @@
             </div>
             <div><label>行数</label><input type="number" id="rows" value="3"></div>
             <div><label>列数</label><input type="number" id="cols" value="3"></div>
-            <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="80" min="20" max="100"></div>
+            <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="100" min="20" max="100"></div>
         </div>
 
         <div class="section-header">
@@ -263,7 +262,7 @@
             wrapper.className = 'thumb-wrapper';
             wrapper.onclick = () => handleThumbClick(index, wrapper);
             const img = document.createElement('img'); img.src = URL.createObjectURL(file);
-            const badge = document.createElement('div'); badge.className = 'thumb-badge'; badge.style="position:absolute; top:-5px; right:-5px; background:var(--text-brown); color:white; font-size:0.6rem; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border-radius:50%; border:1px solid white;"; badge.innerText = index + 1;
+            const badge = document.createElement('div'); badge.style="position:absolute; top:-5px; right:-5px; background:var(--text-brown); color:white; font-size:0.6rem; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border-radius:50%; border:1px solid white;"; badge.innerText = index + 1;
             wrapper.appendChild(img); wrapper.appendChild(badge); pool.appendChild(wrapper);
         });
     }
@@ -276,7 +275,7 @@
     function toggleStroke() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; }
     function toggleShadow() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; }
 
-    // 修复：阴影底层渲染逻辑
+    // 修复逻辑：阴影绝对置底渲染
     function updatePreview() {
         const canvas = document.getElementById('previewCanvas');
         const box = document.getElementById('previewBox');
@@ -303,34 +302,37 @@
         ctx.textBaseline = "middle";
         ctx.lineJoin = "round";
 
-        // 1. 设置阴影参数 (即使是透明文字也要画，必须配合正常填充)
+        // 第一步：只画阴影层（使用透明占位色）
         if(document.getElementById('shEnable').checked) {
-            const shColor = document.getElementById('shColor').value;
-            const shAlpha = document.getElementById('shAlpha').value;
-            const shr = parseInt(shColor.slice(1,3), 16), shg = parseInt(shColor.slice(3,5), 16), shb = parseInt(shColor.slice(5,7), 16);
-            ctx.shadowColor = `rgba(${shr},${shg},${shb},${shAlpha})`; 
+            const shC = document.getElementById('shColor').value;
+            const shA = document.getElementById('shAlpha').value;
+            const shr = parseInt(shC.slice(1,3), 16), shg = parseInt(shC.slice(3,5), 16), shb = parseInt(shC.slice(5,7), 16);
+            ctx.save();
+            ctx.shadowColor = `rgba(${shr},${shg},${shb},${shA})`; 
             ctx.shadowBlur = 12; ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 5;
+            ctx.fillStyle = "rgba(0,0,0,1)"; // 必须是不透明色才能投影，但我们最后会被盖住
+            ctx.fillText(text, tx, ty);
+            ctx.restore();
         }
 
-        // 2. 先画描边 (在阴影之上，字体之下)
+        // 第二步：彻底清除画布阴影属性，开始画真实的描边和文字
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+
         if(document.getElementById('sEnable').checked) {
-            const sColor = document.getElementById('sColor').value;
-            const sAlpha = document.getElementById('sAlpha').value;
-            const sr = parseInt(sColor.slice(1,3), 16), sg = parseInt(sColor.slice(3,5), 16), sb = parseInt(sColor.slice(5,7), 16);
-            ctx.strokeStyle = `rgba(${sr},${sg},${sb},${sAlpha})`;
+            const sC = document.getElementById('sColor').value;
+            const sA = document.getElementById('sAlpha').value;
+            const sr = parseInt(sC.slice(1,3), 16), sg = parseInt(sC.slice(3,5), 16), sb = parseInt(sC.slice(5,7), 16);
+            ctx.strokeStyle = `rgba(${sr},${sg},${sb},${sA})`;
             ctx.lineWidth = document.getElementById('sWidth').value;
             ctx.strokeText(text, tx, ty);
         }
         
-        // 3. 最后画字体 (最顶层)
-        const color = document.getElementById('fColor').value;
-        const alpha = document.getElementById('fAlpha').value;
-        const r = parseInt(color.slice(1,3), 16), g = parseInt(color.slice(3,5), 16), b = parseInt(color.slice(5,7), 16);
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        const fC = document.getElementById('fColor').value;
+        const fA = document.getElementById('fAlpha').value;
+        const fr = parseInt(fC.slice(1,3), 16), fg = parseInt(fC.slice(3,5), 16), fb = parseInt(fC.slice(5,7), 16);
+        ctx.fillStyle = `rgba(${fr},${fg},${fb},${fA})`;
         ctx.fillText(text, tx, ty);
-        
-        // 清理阴影，防止后续绘制受干扰
-        ctx.shadowColor = "transparent";
     }
 
     async function generate() {
@@ -344,7 +346,11 @@
         if(ratioType === 'custom') { rW = document.getElementById('ratioW').value; rH = document.getElementById('ratioH').value; }
         else { [rW, rH] = ratioType.split(':'); }
 
-        const itemW = 400, itemH = itemW * (rH / rW), perPage = rows * cols;
+        // 修复逻辑：以第一张原图宽度为基准，防止网点漫画变糊
+        const firstImg = await loadImage(URL.createObjectURL(currentFiles[0]));
+        const itemW = firstImg.width; 
+        const itemH = itemW * (rH / rW);
+        const perPage = rows * cols;
 
         for (let i = 0; i < currentFiles.length; i += perPage) {
             const remaining = currentFiles.length - i;
@@ -375,8 +381,6 @@
 
     function drawFinalText(ctx, text, x, y, w, h) {
         const size = parseInt(document.getElementById('fSize').value), font = document.getElementById('fontFamily').value;
-        const color = document.getElementById('fColor').value, alpha = document.getElementById('fAlpha').value;
-        const r = parseInt(color.slice(1,3), 16), g = parseInt(color.slice(3,5), 16), b = parseInt(color.slice(5,7), 16);
         ctx.font = `bold ${size}px ${font}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
         
         let tx, ty, p = size * 0.8, pos = document.getElementById('pos').value;
@@ -384,19 +388,28 @@
         else if (pos === 'lb') { tx = x + p; ty = y + h - p; } else if (pos === 'rb') { tx = x + w - p; ty = y + h - p; }
         else { tx = x + w/2; ty = y + h/2; }
 
+        // 阴影置底逻辑
         if(document.getElementById('shEnable').checked) { 
             const shC = document.getElementById('shColor').value, shA = document.getElementById('shAlpha').value;
             const shr = parseInt(shC.slice(1,3), 16), shg = parseInt(shC.slice(3,5), 16), shb = parseInt(shC.slice(5,7), 16);
+            ctx.save();
             ctx.shadowColor = `rgba(${shr},${shg},${shb},${shA})`; ctx.shadowBlur = 12; ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 5;
+            ctx.fillStyle = "rgba(0,0,0,1)"; 
+            ctx.fillText(text, tx, ty);
+            ctx.restore();
         }
+
+        ctx.shadowColor = "transparent";
 
         if(document.getElementById('sEnable').checked) {
             const sC = document.getElementById('sColor').value, sA = document.getElementById('sAlpha').value;
             const sr = parseInt(sC.slice(1,3), 16), sg = parseInt(sC.slice(3,5), 16), sb = parseInt(sC.slice(5,7), 16);
             ctx.strokeStyle = `rgba(${sr},${sg},${sb},${sA})`; ctx.lineWidth = document.getElementById('sWidth').value; ctx.strokeText(text, tx, ty);
         }
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`; ctx.fillText(text, tx, ty);
-        ctx.shadowColor = "transparent";
+        
+        const fC = document.getElementById('fColor').value, fA = document.getElementById('fAlpha').value;
+        const fr = parseInt(fC.slice(1,3), 16), fg = parseInt(fC.slice(3,5), 16), fb = parseInt(fC.slice(5,7), 16);
+        ctx.fillStyle = `rgba(${fr},${fg},${fb},${fA})`; ctx.fillText(text, tx, ty);
     }
 
     function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
