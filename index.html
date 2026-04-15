@@ -22,7 +22,6 @@
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
         .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
         
-        /* 模块内的浅色分割横线样式 */
         .sub-divider { border-top: 1px solid var(--accent-blue); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
@@ -62,8 +61,8 @@
         <div class="section-header"><span>一键切换主题</span></div>
         <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 15px;">
             <option value="gray">格调冷灰 (默认)</option>
-            <option value="rococo">洛可可粉</option>
             <option value="mint">薄荷生巧</option>
+            <option value="rococo">洛可可粉</option>
         </select>
 
         <div class="section-header"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
@@ -127,10 +126,10 @@
     // 主题数据定义
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3' },
-        // 洛可可粉：参考洛可可图片调整，降低饱和度，更冷、更高级
-        rococo: { bg: '#E4CFD4', accentPink: '#C6A9AE', accentBlue: '#BFBDBC', textBrown: '#5A4A4D', btnSwap: '#7D6A6C', section: '#8FA7A4' },
-        // 薄荷生巧：背景改成奶白色 (#FAF8F5)，文字和重点色保持巧克力棕和灰蓝
-        mint: { bg: '#FAF8F5', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E' }
+        // 薄荷生巧：已根据参考图片进行奶油质感化，背景为奶白色
+        mint: { bg: '#FFFDF9', accentPink: '#A6C1BE', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#5B706D', section: '#8FA7A4' },
+        // 洛可可粉：参考参考图片调亮的法式浪漫莫兰迪粉，去除了绿色
+        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5' }
     };
 
     function changeTheme() {
