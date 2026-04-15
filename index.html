@@ -7,19 +7,20 @@
     <title>Kaki Collage Tool</title>
     <style>
         :root {
-            /* 薄荷生巧配色方案 */
-            --bg: #F0F9F6;            /* 极淡的薄荷奶油底色 */
-            --accent-pink: #AEE2D7;   /* 主色：清爽薄荷绿 */
-            --accent-blue: #D7EFED;   /* 辅助：淡薄荷 */
-            --text-brown: #4E342E;    /* 文字：浓郁巧克力棕 */
-            --btn-swap-pink: #76B8A9; /* 调换按钮：深薄荷绿 */
-            --panel-bg: rgba(255, 255, 255, 0.9); /* 半透明奶油白 */
+            /* 分层冷灰配色方案 (基于 image_0.png ) */
+            --bg: #F2E4E9;            /* 浅灰粉底色，image_0.png 的最浅层背景 */
+            --panel-bg: rgba(255, 255, 255, 0.9); /* 半透明奶油白，浮在浅色背景上 */
+            --text-brown: #333333;    /* 文字：深灰色，image_0.png 的主文字色 */
+            --section-header: #A0A0A3; /* 辅文字：中灰色，image_0.png 的辅助文字和中层背景色 */
+            --accent-pink: #B2C9C9;   /* 主色薄荷绿：冷灰薄荷，用于边框，开关，头部下划线，生成按钮 */
+            --accent-blue: #BFBBBE;   /* 辅助薄荷蓝：中灰，用于文件标签，滑块轨道，清空按钮，预览框背景 */
+            --btn-swap-pink: #5F5F60; /* 调换按钮：深灰色，image_0.png 的深层色 */
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 600px; }
-        .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(78, 52, 46, 0.1); margin-bottom: 20px; }
+        .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; }
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: #8D6E63; margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); }
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; }
@@ -41,10 +42,12 @@
         .toggle-switch:checked { background: var(--accent-pink); }
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
-        .font-preview-box { height: 120px; background: #E0F2F1; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; }
+        /* 预览框背景从硬编码改为中灰 CSS 变量 */
+        .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; }
         #previewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(78, 52, 46, 0.7); z-index: 1000; align-items: center; justify-content: center; }
+        /* 模态框覆盖层颜色更新为半透明深灰 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
     </style>
 </head>
@@ -74,20 +77,20 @@
             <div class="setting-row">
                 <div style="flex:2"><label>字体选择</label><select id="fontFamily" onchange="updatePreview()"><option value="sans-serif">系统黑体</option><option value="'Palatino', 'Georgia', serif">复古花体</option><option value="'SimSun', 'STSong', serif">经典宋体</option></select></div>
                 <div style="flex:1"><label>不透明度</label><input type="range" id="fAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
-                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="fColor" value="#4E342E" oninput="updatePreview()"></div>
+                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="fColor" value="#FFFFFF" oninput="updatePreview()"></div>
             </div>
             
             <div class="section-header" style="border:none; margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
             <div id="strokeSettings" class="setting-row">
                 <div style="flex:2"><label>描边粗细</label><input type="number" id="sWidth" value="15" oninput="updatePreview()"></div>
                 <div style="flex:1"><label>不透明度</label><input type="range" id="sAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
-                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="sColor" value="#FFFFFF" oninput="updatePreview()"></div>
+                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="sColor" value="#000000" oninput="updatePreview()"></div>
             </div>
 
             <div class="section-header" style="border:none; margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
             <div id="shadowSettings" class="setting-row" style="display:none">
                 <div style="flex:1"><label>阴影不透明度</label><input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
-                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#4E342E" oninput="updatePreview()"></div>
+                <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#000000" oninput="updatePreview()"></div>
             </div>
 
             <div class="setting-row">
