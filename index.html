@@ -17,11 +17,11 @@
             --btn-swap-pink: #5F5F60; 
             --btn-del-bg: #8A8A8A;
             --selected-border: #5F5F60;
-            --divider-color: #DCDCDC; /* 新增专门控制分割线的变量 */
+            --divider-color: #DCDCDC;
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
-        .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s; }
+        .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s, background 0.3s; }
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
         .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
         
@@ -29,7 +29,8 @@
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput, #stickerInput, #textureInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-        .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
+        /* 更新以支持灰色按钮变白字 */
+        .file-label { background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s, color 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
         .thumb-wrapper { position: relative; cursor: pointer; }
@@ -48,7 +49,7 @@
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         
-        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s; }
+        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s, color 0.3s; }
         .btn-swap { background: var(--btn-swap-pink); color: white; }
         .btn-update { color: white; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-swap-pink); }
 
@@ -61,7 +62,7 @@
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
+        .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; transition: background 0.3s; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .btn-del { flex: 1; background: var(--btn-del-bg); color: white; transition: background 0.3s; } 
@@ -87,7 +88,7 @@
         <div class="preview-pool" id="pool"></div>
         <div style="margin-top: 15px;">
             <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
-            <button class="btn-main" style="background:var(--accent-blue)" onclick="clearStorage()">清空已存图片</button>
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="clearStorage()">清空已存图片</button>
         </div>
 
         <div class="section-header"><span>拼图参数</span></div>
@@ -190,7 +191,7 @@
         
         <div id="downloadGroup" style="display:none;">
             <div class="btn-group">
-                <button class="btn-main" style="background:var(--accent-blue)" onclick="downloadAllSingle()">单张下载</button>
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="downloadAllSingle()">单张下载</button>
                 <button class="btn-main btn-swap" id="zipDownloadBtn" onclick="downloadZip()">ZIP 打包下载</button>
             </div>
         </div>
@@ -229,17 +230,19 @@
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA' },
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
-        // 在此基础上增加新配置，不动其他地方
+        // 在此基础上替换为新的黑乳酪莓配置，精细分配以实现各项字体和按钮要求
         darkPink: {
-            bg: '#2d2e33',           // 图片底部的深炭灰，作为底层背景
-            textBrown: '#dfd6d4',    // 图片底部的浅灰粉，作为主体文字
-            section: '#dfd6d4',      // 次要文字保持浅灰粉
-            accentPink: '#d97f97',   // 图片底部的深灰粉，作为粉色强调色
-            accentBlue: '#7b7b83',   // 图片底部的中灰，作为灰色强调色/滑块背景
-            btnSwap: '#d97f97',      // 调换按钮背景色为深灰粉
-            btnDel: '#7b7b83',       // 删除按钮背景色为中灰
-            selectedBorder: '#d97f97', // 选中边框色
-            divider: '#7b7b83'       // 分割线颜色
+            bg: '#2d2e33',               // 底层黑灰色背景
+            panelBg: 'rgba(45, 46, 51, 0.95)', // 半透明的暗色面板，完美实现暗黑质感
+            textBrown: '#d97f97',        // 全局深粉色字体，确保对比度和阅读性
+            section: '#e2abb4',          // 浅粉色用于标题点缀
+            accentPink: '#dfd6d4',       // 米色用于普通按钮（如：生成拼图、关闭）
+            accentBlue: '#7b7b83',       // 灰色用于灰色按钮（如：清空、单张下载）和滑块
+            btnSwap: '#d97f97',          // 深粉色用于特殊按钮（如：调换、确定）-> 默认系统会配白字
+            btnDel: '#7b7b83',           // 灰色用于删除按钮 -> 默认系统配白字
+            selectedBorder: '#d97f97',   // 深粉色选中边框
+            divider: '#7b7b83',          // 灰色分割线
+            grayBtnText: '#ffffff'       // 新增变量：强制灰色按钮显示为白色字体
         }
     };
 
@@ -247,7 +250,12 @@
         const selected = document.getElementById('themeSelector').value;
         const t = themes[selected];
         const root = document.documentElement;
+        
         root.style.setProperty('--bg', t.bg);
+        // 新增面板背景及灰色文字的切换控制
+        root.style.setProperty('--panel-bg', t.panelBg || 'rgba(255, 255, 255, 0.9)'); 
+        root.style.setProperty('--gray-btn-text', t.grayBtnText || t.textBrown);
+
         root.style.setProperty('--accent-pink', t.accentPink);
         root.style.setProperty('--accent-blue', t.accentBlue);
         root.style.setProperty('--text-brown', t.textBrown);
@@ -255,7 +263,7 @@
         root.style.setProperty('--section-header', t.section);
         root.style.setProperty('--btn-del-bg', t.btnDel);
         root.style.setProperty('--selected-border', t.selectedBorder);
-        root.style.setProperty('--divider-color', t.divider); // 更新独立分割线颜色
+        root.style.setProperty('--divider-color', t.divider); 
         
         const updateBtn = document.getElementById('updateSoldBtn');
         if(updateBtn) updateBtn.style.backgroundColor = t.btnSwap;
