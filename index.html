@@ -47,8 +47,12 @@
         input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; transition: background 0.3s; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
-        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s; }
+        
+        /* 统一下方大按钮样式 */
+        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s; }
         .btn-swap { background: var(--btn-swap-pink); color: white; }
+        .btn-update { border: 1px solid rgba(0,0,0,0.1); } /* 增加微弱描边以区分 */
+
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
         .toggle-switch:checked { background: var(--accent-pink); }
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
@@ -127,7 +131,7 @@
             <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
         </div>
 
-        <div class="section-header"><span>遮挡已售图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
+        <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
         <div id="soldSettings" style="display:none;">
             <div style="margin-bottom: 10px;">
                 <label>遮挡编号 (支持逗号/顿号/横杠，如: 1, 2-10, 35)</label>
@@ -135,8 +139,7 @@
             </div>
             
             <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
-            <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 15px;">
-                <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
+            <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;"> <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
                     <canvas id="stickerPreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
@@ -144,11 +147,10 @@
                         <div class="file-label" style="text-align:center; display:block;">导入贴纸</div>
                         <input type="file" id="stickerInput" accept="image/*">
                     </div>
-                    <div><label>贴纸大小</label><input type="range" id="stickerSize" value="75" min="10" max="100" oninput="updateStickerPreview()"></div>
-                    <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
+                    <div><label>贴纸大小 (10-300%)</label><input type="range" id="stickerSize" value="75" min="10" max="300" oninput="updateStickerPreview()"></div> <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
                 </div>
             </div>
-            <button class="btn-main" style="background:var(--accent-blue); padding:10px; margin-bottom:5px;" onclick="generate()">更新拼图</button>
+            <button class="btn-main btn-update" style="background:var(--accent-blue); margin-top: 15px;" onclick="generate()">更新拼图</button>
         </div>
 
         <button class="btn-main" style="margin-top: 20px;" onclick="generate()">生成拼图</button>
@@ -231,7 +233,6 @@
     function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
     function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
     
-    // 遮挡模块开关
     function toggleSoldSection() { document.getElementById('soldSettings').style.display = document.getElementById('soldEnable').checked ? 'block' : 'none'; }
     function toggleStickerSection() { 
         document.getElementById('stickerSettings').style.display = document.getElementById('stickerEnable').checked ? 'flex' : 'none'; 
@@ -260,10 +261,12 @@
         if(customStickerImg) {
             const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
             const alpha = parseFloat(document.getElementById('stickerAlpha').value);
-            let targetW = rect.width * sizePct;
+            // 这里为了让预览图即便放大3倍也能展示部分，限制预览显示比例，但实际生成按滑块值
+            let displaySize = Math.min(sizePct, 1.0); 
+            let targetW = rect.width * displaySize;
             let targetH = targetW * (customStickerImg.height / customStickerImg.width);
-            if (targetH > rect.height * sizePct) {
-                targetH = rect.height * sizePct;
+            if (targetH > rect.height * displaySize) {
+                targetH = rect.height * displaySize;
                 targetW = targetH * (customStickerImg.width / customStickerImg.height);
             }
             ctx.globalAlpha = alpha;
@@ -334,11 +337,9 @@
         ctx.fillText(text, cx, cy);
     }
 
-    // 获取并解析被遮挡的数字列表
     function getSoldNumbers() {
         if(!document.getElementById('soldEnable').checked) return new Set();
         let raw = document.getElementById('soldNumbers').value;
-        // 把常见的间隔符全部替换成纯英文逗号，同时把横杠统一下
         raw = raw.replace(/[.、，。]/g, ',').replace(/[-—_~]/g, '-');
         let parts = raw.split(',');
         let sold = new Set();
@@ -384,11 +385,8 @@
                 const img = await loadImage(URL.createObjectURL(currentFiles[i+j]));
                 const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
                 const currentNumber = parseInt(document.getElementById('startNum').value) + i + j;
-                
-                // 1. 绘制底层商品图片
                 drawCover(ctx, img, x, y, itemW, itemH);
                 
-                // 2. 判断是否已售，叠加遮罩/贴纸
                 if(soldSet.has(currentNumber)) {
                     if(document.getElementById('stickerEnable').checked && customStickerImg) {
                         const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
@@ -397,29 +395,22 @@
                         ctx.globalAlpha = alpha;
                         let targetW = itemW * sizePct;
                         let targetH = targetW * (customStickerImg.height / customStickerImg.width);
-                        if (targetH > itemH * sizePct) {
-                            targetH = itemH * sizePct;
-                            targetW = targetH * (customStickerImg.width / customStickerImg.height);
-                        }
+                        // 如果按宽度算溢出高度太多，且不是为了铺满，则按高度二次限制（此处主要保证居中展示）
+                        // 但用户既然要放大，我们允许超出范围。
                         ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
                         ctx.restore();
                     } else {
-                        // 默认遮挡样式：60%黑 + 居中描边SOLD OUT
                         ctx.save();
                         ctx.fillStyle = 'rgba(0,0,0,0.6)';
                         ctx.fillRect(x, y, itemW, itemH);
-                        
                         const fontSize = itemW * 0.16;
                         ctx.font = `bold ${fontSize}px sans-serif`;
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
                         ctx.lineJoin = "round";
                         ctx.lineWidth = itemW * 0.02;
-                        
                         ctx.strokeStyle = 'black';
                         ctx.fillStyle = 'white';
-                        
-                        // 分两行绘制
                         ctx.strokeText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
                         ctx.fillText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
                         ctx.strokeText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
@@ -428,7 +419,6 @@
                     }
                 }
 
-                // 3. 绘制编号 (覆盖在一切之上)
                 if(document.getElementById('numEnable').checked) {
                     ctx.save(); ctx.translate(x, y);
                     const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
