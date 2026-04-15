@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-测试</title>
+    <title>Kaki拼图工具-禁止二传</title>
     <style>
         :root {
             --bg: #D7DEE4;            
@@ -163,19 +163,21 @@
         <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
         <div id="soldSettings" style="display:none;">
             <div style="margin-bottom: 10px;">
-                <label>遮挡编号 (支持逗号/顿号/横杠，如: 1, 2-10, 35)</label>
-                <input type="text" id="soldNumbers" placeholder="例如: 1, 2-5, 8、9.10">
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                    <input type="checkbox" class="toggle-switch" id="soldRemainingMode">
-                    <span style="font-size: 0.8rem; font-weight: 500;">以余图方式遮挡 (输入的编号为未售出，其余全遮挡)</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="margin-bottom: 0;">遮挡编号</label>
+                    <label style="margin-bottom: 0; display: flex; align-items: center; gap: 4px; font-weight: normal; cursor: pointer; font-size: 0.75rem;">
+                        <input type="checkbox" id="soldRemainingMode" onchange="toggleRemainHint()" style="width: auto; margin: 0;"> 以余图方式遮挡
+                    </label>
                 </div>
+                <input type="text" id="soldNumbers" placeholder="支持逗号/顿号/横杠，如: 1, 2-5, 8、9.10">
+                <div id="remainHint" style="display: none; font-size: 0.7rem; color: var(--section-header); margin-top: 5px; padding-left: 4px; transition: color 0.3s;">*输入的编号为未售出，其余全遮挡</div>
             </div>
 
             <div class="section-header" style="border:none; margin:0 0 10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
             
             <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
             <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
-                <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
+                <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 160px;">
                     <canvas id="stickerPreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
@@ -330,6 +332,10 @@
     function toggleStickerSection() { 
         document.getElementById('stickerSettings').style.display = document.getElementById('stickerEnable').checked ? 'flex' : 'none'; 
         if(document.getElementById('stickerEnable').checked) setTimeout(updateStickerPreview, 50);
+    }
+    
+    function toggleRemainHint() {
+        document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
     }
 
     document.getElementById('textureInput').onchange = async (e) => {
