@@ -8,7 +8,6 @@
     <title>Kaki拼图工具-禁止二传</title>
     <style>
         :root {
-            /* 默认：格调冷灰方案 - 背景已改为 #D7DEE4 */
             --bg: #D7DEE4;            
             --panel-bg: rgba(255, 255, 255, 0.9); 
             --text-brown: #333333;    
@@ -28,14 +27,14 @@
         .sub-divider { border-top: 1px solid var(--accent-blue); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
-        #fileInput, #stickerInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        #fileInput, #stickerInput, #textureInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
-        /* 要求三：修改角标位置，使其在边缘右上角 */
-        .thumb-badge { position: absolute; top: -6px; right: -6px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        /* 要求一：去除了阴影 box-shadow */
+        .thumb-badge { position: absolute; top: -6px; right: -6px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
         
         .thumb-wrapper.selected img { border: 3px solid var(--selected-border); box-sizing: border-box; opacity: 0.85; }
 
@@ -51,8 +50,6 @@
         
         .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s; }
         .btn-swap { background: var(--btn-swap-pink); color: white; }
-        
-        /* 更新拼图按钮的基础样式 */
         .btn-update { color: white; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-swap-pink); }
 
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
@@ -60,7 +57,7 @@
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
         .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; transition: background 0.3s, border 0.3s; }
-        #previewCanvas, #stickerPreviewCanvas { width: 100%; height: 100%; }
+        #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
@@ -126,11 +123,40 @@
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#000000" oninput="updatePreview()"></div>
             </div>
 
+            <div class="sub-divider"></div>
+
             <div class="setting-row">
                 <div style="flex:1"><label>编号位置</label><select id="pos" onchange="updatePreview()"><option value="rb">右下</option><option value="lb">左下</option><option value="rt">右上</option><option value="lt">左上</option><option value="cc">中心</option></select></div>
                 <div style="flex:1"><label>编号大小</label><input type="number" id="fSize" value="150" oninput="updatePreview()"></div>
             </div>
             <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
+        </div>
+
+        <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
+        <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
+            <div class="font-preview-box" id="texturePreviewBox" style="flex:1; margin-top:0; min-height: 160px;">
+                <canvas id="texturePreviewCanvas"></canvas>
+            </div>
+            <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
+                <div class="file-upload-wrapper" style="width:100%;">
+                    <div class="file-label" style="text-align:center; display:block;">导入底纹</div>
+                    <input type="file" id="textureInput" accept="image/*">
+                </div>
+                <div>
+                    <label>底纹效果</label>
+                    <select id="textureBlendMode" onchange="updateTexturePreview()" style="margin-bottom: 5px;">
+                        <option value="source-over">正常</option>
+                        <option value="multiply">正片叠底</option>
+                        <option value="screen">滤色</option>
+                        <option value="overlay">叠加</option>
+                        <option value="soft-light">柔光</option>
+                    </select>
+                </div>
+                <div>
+                    <label>不透明度</label>
+                    <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateTexturePreview()">
+                </div>
+            </div>
         </div>
 
         <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
@@ -188,6 +214,7 @@
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
+    let customTextureImg = null; // 底纹图片变量
 
     const themes = {
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
@@ -208,17 +235,16 @@
         root.style.setProperty('--btn-del-bg', t.btnDel);
         root.style.setProperty('--selected-border', t.selectedBorder);
         
-        // 同步更新拼图按钮颜色为 btnSwap 颜色
         const updateBtn = document.getElementById('updateSoldBtn');
         if(updateBtn) updateBtn.style.backgroundColor = t.btnSwap;
     }
 
     const request = indexedDB.open("KakiDB", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
-    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; // 初始化主题颜色
+    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
 
     function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
-    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); }; }
+    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); }; }
 
     function renderPool() {
         const pool = document.getElementById('pool'); pool.innerHTML = "";
@@ -234,20 +260,44 @@
         });
     }
 
-    document.getElementById('fileInput').onchange = (e) => { currentFiles = currentFiles.concat(Array.from(e.target.files)); saveToDB(); e.target.value = ""; };
-    function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; document.getElementById('downloadGroup').style.display='none'; }
-    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); } }
+    document.getElementById('fileInput').onchange = (e) => { 
+        currentFiles = currentFiles.concat(Array.from(e.target.files)); 
+        saveToDB(); 
+        e.target.value = ""; 
+        if(document.getElementById('textureEnable').checked) updateTexturePreview();
+    };
+    function clearStorage() { 
+        currentFiles = []; 
+        saveToDB(); 
+        document.getElementById('resultContainer').innerHTML = ""; 
+        document.getElementById('downloadGroup').style.display='none'; 
+        if(document.getElementById('textureEnable').checked) updateTexturePreview();
+    }
+    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); } }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
     function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
     function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
     
+    function toggleTextureSection() { 
+        document.getElementById('textureSettings').style.display = document.getElementById('textureEnable').checked ? 'flex' : 'none'; 
+        if(document.getElementById('textureEnable').checked) setTimeout(updateTexturePreview, 50);
+    }
+    
     function toggleSoldSection() { document.getElementById('soldSettings').style.display = document.getElementById('soldEnable').checked ? 'block' : 'none'; }
     function toggleStickerSection() { 
         document.getElementById('stickerSettings').style.display = document.getElementById('stickerEnable').checked ? 'flex' : 'none'; 
         if(document.getElementById('stickerEnable').checked) setTimeout(updateStickerPreview, 50);
     }
+
+    document.getElementById('textureInput').onchange = async (e) => {
+        if(e.target.files.length > 0) {
+            customTextureImg = await loadImage(URL.createObjectURL(e.target.files[0]));
+            updateTexturePreview();
+        }
+        e.target.value = "";
+    };
 
     document.getElementById('stickerInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
@@ -256,6 +306,42 @@
         }
         e.target.value = "";
     };
+
+    async function updateTexturePreview() {
+        const canvas = document.getElementById('texturePreviewCanvas');
+        const box = document.getElementById('texturePreviewBox');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        // 绘制第一张图片作为底图预览
+        if (currentFiles.length > 0) {
+            const firstImg = await loadImage(URL.createObjectURL(currentFiles[0]));
+            drawCover(ctx, firstImg, 0, 0, rect.width, rect.height);
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(0, 0, rect.width, rect.height);
+        }
+
+        // 应用底纹效果
+        if (customTextureImg) {
+            ctx.save();
+            ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
+            ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
+            drawCover(ctx, customTextureImg, 0, 0, rect.width, rect.height);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("暂无底纹", rect.width/2, rect.height/2);
+        }
+    }
 
     function updateStickerPreview() {
         const canvas = document.getElementById('stickerPreviewCanvas');
@@ -271,12 +357,10 @@
         if(customStickerImg) {
             const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
             const alpha = parseFloat(document.getElementById('stickerAlpha').value);
-            // 修复预览：允许图片在视觉上变大并超出预览框
             let targetW = rect.width * sizePct;
             let targetH = targetW * (customStickerImg.height / customStickerImg.width);
             
             ctx.globalAlpha = alpha;
-            // 居中绘制放大的图片
             ctx.drawImage(customStickerImg, (rect.width - targetW)/2, (rect.height - targetH)/2, targetW, targetH);
             ctx.globalAlpha = 1;
         } else {
@@ -284,7 +368,7 @@
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("暂无图片", rect.width/2, rect.height/2);
+            ctx.fillText("暂无贴纸", rect.width/2, rect.height/2);
         }
     }
 
@@ -392,8 +476,20 @@
                 const img = await loadImage(URL.createObjectURL(currentFiles[i+j]));
                 const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
                 const currentNumber = parseInt(document.getElementById('startNum').value) + i + j;
+                
+                // 绘制原图
                 drawCover(ctx, img, x, y, itemW, itemH);
                 
+                // 要求三：绘制底纹
+                if (document.getElementById('textureEnable').checked && customTextureImg) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
+                    ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
+                    drawCover(ctx, customTextureImg, x, y, itemW, itemH);
+                    ctx.restore();
+                }
+                
+                // 绘制遮挡
                 if(soldSet.has(currentNumber)) {
                     if(document.getElementById('stickerEnable').checked && customStickerImg) {
                         const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
@@ -406,7 +502,6 @@
                         ctx.restore();
                     } else {
                         ctx.save();
-                        // 要求四：黑色不透明度增加到 70% (0.7)
                         ctx.fillStyle = 'rgba(0,0,0,0.7)';
                         ctx.fillRect(x, y, itemW, itemH);
                         const fontSize = itemW * 0.16;
@@ -425,7 +520,6 @@
                     }
                 }
 
-                // 要求二：增加被遮挡图片的编号显示逻辑判断
                 let drawNum = document.getElementById('numEnable').checked;
                 if(soldSet.has(currentNumber) && !document.getElementById('soldNumEnable').checked) {
                     drawNum = false;
@@ -498,7 +592,7 @@
     }
 
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
-    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); }
+    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
