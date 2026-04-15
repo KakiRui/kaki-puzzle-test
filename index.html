@@ -16,6 +16,9 @@
             --accent-pink: #C0C0C0;   
             --accent-blue: #DCDCDC;   
             --btn-swap-pink: #5F5F60; 
+            /* 新增：为删除按钮和选中状态适配的变量 */
+            --btn-del-bg: #8A8A8A;
+            --selected-border: #5F5F60;
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
@@ -30,10 +33,13 @@
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
-        /* 问题一：增加角标样式 */
+        /* 优化角标：移除阴影，稍微向内收缩以显得更精致，增加字体加粗 */
         .thumb-wrapper { position: relative; cursor: pointer; }
-        .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
-        .thumb-badge { position: absolute; top: -5px; right: -5px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; }
+        .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
+        .thumb-badge { position: absolute; top: 4px; right: 4px; background: var(--btn-swap-pink); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
+        
+        /* 新增：选中状态的边框样式 */
+        .thumb-wrapper.selected img { border: 3px solid var(--selected-border); box-sizing: border-box; opacity: 0.85; }
 
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
@@ -57,9 +63,9 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
         
-        /* 问题二 & 三：新增按钮样式适配 */
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-del { flex: 1; background: #ff7675; color: white; } /* 删除键色调稍重以示警示，但保持圆润 */
+        /* 优化删除键：使用变量以便支持主题切换 */
+        .btn-del { flex: 1; background: var(--btn-del-bg); color: white; transition: background 0.3s; } 
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
     </style>
@@ -151,13 +157,13 @@
 
 <script>
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
-    let generatedCanvases = []; // 存储生成的 canvas 用于下载
+    let generatedCanvases = []; 
 
-    // 主题数据定义
+    // 新增：扩展主题数据，加入对应的删除按钮颜色(btnDel)和选中边框颜色(selectedBorder)
     const themes = {
-        gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3' },
-        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E' },
-        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5' }
+        gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
+        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E' },
+        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5' }
     };
 
     function changeTheme() {
@@ -170,6 +176,9 @@
         root.style.setProperty('--text-brown', t.textBrown);
         root.style.setProperty('--btn-swap-pink', t.btnSwap);
         root.style.setProperty('--section-header', t.section);
+        // 新增属性写入
+        root.style.setProperty('--btn-del-bg', t.btnDel);
+        root.style.setProperty('--selected-border', t.selectedBorder);
     }
 
     const request = indexedDB.open("KakiDB", 1);
@@ -185,7 +194,6 @@
             const wrapper = document.createElement('div'); wrapper.className = 'thumb-wrapper';
             wrapper.onclick = () => handleThumbClick(index, wrapper);
             
-            // 问题一：添加角标
             const badge = document.createElement('div');
             badge.className = 'thumb-badge';
             badge.innerText = index + 1;
@@ -199,7 +207,6 @@
     document.getElementById('fileInput').onchange = (e) => { currentFiles = currentFiles.concat(Array.from(e.target.files)); saveToDB(); e.target.value = ""; };
     function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; document.getElementById('downloadGroup').style.display='none'; }
     
-    // 问题二：删除当前预览图
     function deleteCurrentImage() {
         if (currentPreviewIndex > -1) {
             currentFiles.splice(currentPreviewIndex, 1);
@@ -305,7 +312,6 @@
         document.getElementById('downloadGroup').style.display = 'block';
     }
 
-    // 问题三：单张逐个下载
     async function downloadAllSingle() {
         const q = parseInt(document.getElementById('quality').value) / 100;
         for (let i = 0; i < generatedCanvases.length; i++) {
@@ -313,12 +319,10 @@
             link.download = `Kaki_Collage_${i + 1}.jpg`;
             link.href = generatedCanvases[i].toDataURL("image/jpeg", q);
             link.click();
-            // 设置 500ms 间隔防止浏览器拦截或漏下
             await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
 
-    // 问题三：ZIP 打包下载
     async function downloadZip() {
         const zip = new JSZip();
         const q = parseInt(document.getElementById('quality').value) / 100;
@@ -352,6 +356,7 @@
         if(isSwapMode){ 
             if(swapSelection.includes(i))return; 
             swapSelection.push(i); 
+            el.classList.add('selected'); // 新增：为点击的图片添加选中状态类名
             if(swapSelection.length===2){ 
                 document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; 
                 document.getElementById('swapModal').style.display='flex'; 
