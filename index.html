@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki Collage Tool-测试</title>
+    <title>Kaki拼图工具-禁止二传</title>
     <style>
         :root {
-            /* 默认：格调冷灰方案 */
-            --bg: #F2E4E9;            
+            /* 默认：格调冷灰方案 - 背景已改为 #D7DEE4 */
+            --bg: #D7DEE4;            
             --panel-bg: rgba(255, 255, 255, 0.9); 
             --text-brown: #333333;    
             --section-header: #A0A0A3; 
@@ -34,7 +34,8 @@
         
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
-        .thumb-badge { position: absolute; top: 2px; right: 2px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
+        /* 要求三：修改角标位置，使其在边缘右上角 */
+        .thumb-badge { position: absolute; top: -6px; right: -6px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         
         .thumb-wrapper.selected img { border: 3px solid var(--selected-border); box-sizing: border-box; opacity: 0.85; }
 
@@ -138,6 +139,8 @@
                 <label>遮挡编号 (支持逗号/顿号/横杠，如: 1, 2-10, 35)</label>
                 <input type="text" id="soldNumbers" placeholder="例如: 1, 2-5, 8、9.10">
             </div>
+
+            <div class="section-header" style="border:none; margin:0 0 10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
             
             <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
             <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
@@ -173,8 +176,8 @@
         <h3>图片预览</h3>
         <img id="modalImg" style="width:100%;">
         <div class="btn-group">
-            <button class="btn-main btn-del btn-flex-1" onclick="deleteCurrentImage()">删除</button>
             <button class="btn-main btn-flex-3" onclick="closeModal('viewModal')">关闭</button>
+            <button class="btn-main btn-del btn-flex-1" onclick="deleteCurrentImage()">删除</button>
         </div>
     </div>
 </div>
@@ -187,7 +190,7 @@
     let customStickerImg = null;
 
     const themes = {
-        gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
+        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E' },
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5' }
     };
@@ -403,7 +406,8 @@
                         ctx.restore();
                     } else {
                         ctx.save();
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                        // 要求四：黑色不透明度增加到 70% (0.7)
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)';
                         ctx.fillRect(x, y, itemW, itemH);
                         const fontSize = itemW * 0.16;
                         ctx.font = `bold ${fontSize}px sans-serif`;
@@ -421,7 +425,13 @@
                     }
                 }
 
-                if(document.getElementById('numEnable').checked) {
+                // 要求二：增加被遮挡图片的编号显示逻辑判断
+                let drawNum = document.getElementById('numEnable').checked;
+                if(soldSet.has(currentNumber) && !document.getElementById('soldNumEnable').checked) {
+                    drawNum = false;
+                }
+
+                if(drawNum) {
                     ctx.save(); ctx.translate(x, y);
                     const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
                     drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
