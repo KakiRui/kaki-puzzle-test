@@ -28,11 +28,10 @@
         .sub-divider { border-top: 1px solid var(--accent-blue); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
-        #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        #fileInput, #stickerInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
-        /* 优化一：调整角标位置到极致右上角，并缩小尺寸 */
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
         .thumb-badge { position: absolute; top: 2px; right: 2px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
@@ -42,7 +41,7 @@
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
-        input[type="number"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--text-brown); outline: none; transition: border 0.3s; }
+        input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--text-brown); outline: none; transition: border 0.3s; }
         input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; transition: border 0.3s; }
         input[type="range"] { width: 85%; appearance: none; background: transparent; padding: 0; margin: 15px 0 0 4px; display: block; }
         input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; transition: background 0.3s; }
@@ -55,7 +54,7 @@
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
         .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; transition: background 0.3s, border 0.3s; }
-        #previewCanvas { width: 100%; height: 100%; }
+        #previewCanvas, #stickerPreviewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
@@ -127,6 +126,31 @@
             </div>
             <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
         </div>
+
+        <div class="section-header"><span>遮挡已售图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
+        <div id="soldSettings" style="display:none;">
+            <div style="margin-bottom: 10px;">
+                <label>遮挡编号 (支持逗号/顿号/横杠，如: 1, 2-10, 35)</label>
+                <input type="text" id="soldNumbers" placeholder="例如: 1, 2-5, 8、9.10">
+            </div>
+            
+            <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
+            <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 15px;">
+                <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
+                    <canvas id="stickerPreviewCanvas"></canvas>
+                </div>
+                <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
+                    <div class="file-upload-wrapper" style="width:100%;">
+                        <div class="file-label" style="text-align:center; display:block;">导入贴纸</div>
+                        <input type="file" id="stickerInput" accept="image/*">
+                    </div>
+                    <div><label>贴纸大小</label><input type="range" id="stickerSize" value="75" min="10" max="100" oninput="updateStickerPreview()"></div>
+                    <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
+                </div>
+            </div>
+            <button class="btn-main" style="background:var(--accent-blue); padding:10px; margin-bottom:5px;" onclick="generate()">更新拼图</button>
+        </div>
+
         <button class="btn-main" style="margin-top: 20px;" onclick="generate()">生成拼图</button>
         
         <div id="downloadGroup" style="display:none;">
@@ -155,6 +179,7 @@
 <script>
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
+    let customStickerImg = null;
 
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
@@ -188,12 +213,10 @@
         currentFiles.forEach((file, index) => {
             const wrapper = document.createElement('div'); wrapper.className = 'thumb-wrapper';
             wrapper.onclick = () => handleThumbClick(index, wrapper);
-            
             const badge = document.createElement('div');
             badge.className = 'thumb-badge';
             badge.innerText = index + 1;
             wrapper.appendChild(badge);
-
             const img = document.createElement('img'); img.src = URL.createObjectURL(file);
             wrapper.appendChild(img); pool.appendChild(wrapper);
         });
@@ -201,21 +224,60 @@
 
     document.getElementById('fileInput').onchange = (e) => { currentFiles = currentFiles.concat(Array.from(e.target.files)); saveToDB(); e.target.value = ""; };
     function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; document.getElementById('downloadGroup').style.display='none'; }
-    
-    function deleteCurrentImage() {
-        if (currentPreviewIndex > -1) {
-            currentFiles.splice(currentPreviewIndex, 1);
-            saveToDB();
-            closeModal('viewModal');
-        }
-    }
+    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); } }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
     function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
     function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
+    
+    // 遮挡模块开关
+    function toggleSoldSection() { document.getElementById('soldSettings').style.display = document.getElementById('soldEnable').checked ? 'block' : 'none'; }
+    function toggleStickerSection() { 
+        document.getElementById('stickerSettings').style.display = document.getElementById('stickerEnable').checked ? 'flex' : 'none'; 
+        if(document.getElementById('stickerEnable').checked) setTimeout(updateStickerPreview, 50);
+    }
 
-    // 优化二：重写预览逻辑，确保编号始终在中央缩放，无视位置设置
+    document.getElementById('stickerInput').onchange = async (e) => {
+        if(e.target.files.length > 0) {
+            customStickerImg = await loadImage(URL.createObjectURL(e.target.files[0]));
+            updateStickerPreview();
+        }
+        e.target.value = "";
+    };
+
+    function updateStickerPreview() {
+        const canvas = document.getElementById('stickerPreviewCanvas');
+        const box = document.getElementById('stickerPreviewBox');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        
+        if(customStickerImg) {
+            const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
+            const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+            let targetW = rect.width * sizePct;
+            let targetH = targetW * (customStickerImg.height / customStickerImg.width);
+            if (targetH > rect.height * sizePct) {
+                targetH = rect.height * sizePct;
+                targetW = targetH * (customStickerImg.width / customStickerImg.height);
+            }
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(customStickerImg, (rect.width - targetW)/2, (rect.height - targetH)/2, targetW, targetH);
+            ctx.globalAlpha = 1;
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("暂无图片", rect.width/2, rect.height/2);
+        }
+    }
+
     function updatePreview() {
         const canvas = document.getElementById('previewCanvas');
         const box = document.getElementById('previewBox');
@@ -230,10 +292,7 @@
         const text = document.getElementById('startNum').value || "1";
         const fSize = parseInt(document.getElementById('fSize').value) || 150;
         const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
-
-        // 统一缩放比例：将 collage 比例 (基准 1000px) 转换为预览框比例
         const previewRatio = rect.width / 1000;
-        
         ctx.save();
         drawComplexText(ctx, text, rect.width, rect.height, fSize * previewRatio, sWidth * previewRatio, true);
         ctx.restore();
@@ -247,11 +306,7 @@
         const safetyPadding = (size * 0.5) + (sWidth * 0.5) + shadowOffset + 20;
         let cx, cy;
         const pos = document.getElementById('pos').value;
-        
-        if (isPreview) { 
-            // 预览模式：无视 pos，强制居中
-            cx = w / 2; cy = h / 2; 
-        } 
+        if (isPreview) { cx = w / 2; cy = h / 2; } 
         else {
             if (pos === 'lt') { cx = safetyPadding; cy = safetyPadding; } 
             else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
@@ -259,7 +314,6 @@
             else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
             else { cx = w/2; cy = h/2; }
         }
-
         if(document.getElementById('shEnable').checked) {
             const rgb = hexToRgb(document.getElementById('shColor').value);
             ctx.save();
@@ -280,6 +334,31 @@
         ctx.fillText(text, cx, cy);
     }
 
+    // 获取并解析被遮挡的数字列表
+    function getSoldNumbers() {
+        if(!document.getElementById('soldEnable').checked) return new Set();
+        let raw = document.getElementById('soldNumbers').value;
+        // 把常见的间隔符全部替换成纯英文逗号，同时把横杠统一下
+        raw = raw.replace(/[.、，。]/g, ',').replace(/[-—_~]/g, '-');
+        let parts = raw.split(',');
+        let sold = new Set();
+        parts.forEach(p => {
+            p = p.trim();
+            if(!p) return;
+            if(p.includes('-')) {
+                let [start, end] = p.split('-');
+                start = parseInt(start); end = parseInt(end);
+                if(!isNaN(start) && !isNaN(end)) {
+                    for(let i = Math.min(start, end); i <= Math.max(start, end); i++) sold.add(i);
+                }
+            } else {
+                let num = parseInt(p);
+                if(!isNaN(num)) sold.add(num);
+            }
+        });
+        return sold;
+    }
+
     async function generate() {
         if (currentFiles.length === 0) return;
         const container = document.getElementById('resultContainer'); container.innerHTML = "";
@@ -292,6 +371,8 @@
         else { [rW, rH] = rSelect.split(':'); }
         const itemW = 1000; const itemH = itemW * (rH / rW);
         const perPage = rows * cols;
+        const soldSet = getSoldNumbers();
+
         for (let i = 0; i < currentFiles.length; i += perPage) {
             const canvas = document.createElement('canvas');
             const cRows = Math.ceil(Math.min(currentFiles.length - i, perPage) / cols);
@@ -302,11 +383,56 @@
             for (let j = 0; j < perPage && (i+j) < currentFiles.length; j++) {
                 const img = await loadImage(URL.createObjectURL(currentFiles[i+j]));
                 const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
+                const currentNumber = parseInt(document.getElementById('startNum').value) + i + j;
+                
+                // 1. 绘制底层商品图片
                 drawCover(ctx, img, x, y, itemW, itemH);
+                
+                // 2. 判断是否已售，叠加遮罩/贴纸
+                if(soldSet.has(currentNumber)) {
+                    if(document.getElementById('stickerEnable').checked && customStickerImg) {
+                        const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
+                        const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+                        ctx.save();
+                        ctx.globalAlpha = alpha;
+                        let targetW = itemW * sizePct;
+                        let targetH = targetW * (customStickerImg.height / customStickerImg.width);
+                        if (targetH > itemH * sizePct) {
+                            targetH = itemH * sizePct;
+                            targetW = targetH * (customStickerImg.width / customStickerImg.height);
+                        }
+                        ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
+                        ctx.restore();
+                    } else {
+                        // 默认遮挡样式：60%黑 + 居中描边SOLD OUT
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                        ctx.fillRect(x, y, itemW, itemH);
+                        
+                        const fontSize = itemW * 0.16;
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.lineJoin = "round";
+                        ctx.lineWidth = itemW * 0.02;
+                        
+                        ctx.strokeStyle = 'black';
+                        ctx.fillStyle = 'white';
+                        
+                        // 分两行绘制
+                        ctx.strokeText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                        ctx.fillText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                        ctx.strokeText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                        ctx.fillText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                        ctx.restore();
+                    }
+                }
+
+                // 3. 绘制编号 (覆盖在一切之上)
                 if(document.getElementById('numEnable').checked) {
                     ctx.save(); ctx.translate(x, y);
                     const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
-                    drawComplexText(ctx, parseInt(document.getElementById('startNum').value) + i + j, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
+                    drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
                     ctx.restore();
                 }
             }
@@ -350,10 +476,7 @@
         ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
     }
 
-    function hexToRgb(hex) {
-        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-        return {r, g, b};
-    }
+    function hexToRgb(hex) { const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16); return {r, g, b}; }
     function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
     
     function handleThumbClick(i, el) { 
