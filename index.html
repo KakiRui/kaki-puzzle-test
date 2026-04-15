@@ -166,7 +166,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <label style="margin-bottom: 0;">遮挡编号</label>
                     <label style="margin-bottom: 0; display: flex; align-items: center; gap: 4px; font-weight: normal; cursor: pointer; font-size: 0.75rem;">
-                        <input type="checkbox" id="soldRemainingMode" onchange="toggleRemainHint()" style="width: auto; margin: 0;"> 以余图方式遮挡
+                        <input type="checkbox" id="soldRemainingMode" onchange="toggleRemainHint()" style="width: auto; margin: 0; accent-color: var(--accent-pink);"> 以余图方式遮挡
                     </label>
                 </div>
                 <input type="text" id="soldNumbers" placeholder="支持逗号/顿号/横杠，如: 1, 2-5, 8、9.10">
@@ -569,7 +569,7 @@
                         ctx.save();
                         ctx.fillStyle = 'rgba(0,0,0,0.7)';
                         ctx.fillRect(x, y, itemW, itemH);
-                        const fontSize = itemW * 0.20; 
+                        const fontSize = itemW * 0.16; 
                         ctx.font = `bold ${fontSize}px sans-serif`;
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
