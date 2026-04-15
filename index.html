@@ -16,7 +16,6 @@
             --accent-pink: #C0C0C0;   
             --accent-blue: #DCDCDC;   
             --btn-swap-pink: #5F5F60; 
-            /* 新增：为删除按钮和选中状态适配的变量 */
             --btn-del-bg: #8A8A8A;
             --selected-border: #5F5F60;
         }
@@ -33,12 +32,11 @@
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
-        /* 优化角标：移除阴影，稍微向内收缩以显得更精致，增加字体加粗 */
+        /* 要求一 & 要求三：优化角标位置与大小 */
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
-        .thumb-badge { position: absolute; top: 4px; right: 4px; background: var(--btn-swap-pink); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
+        .thumb-badge { position: absolute; top: 3px; right: 3px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
         
-        /* 新增：选中状态的边框样式 */
         .thumb-wrapper.selected img { border: 3px solid var(--selected-border); box-sizing: border-box; opacity: 0.85; }
 
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -64,7 +62,6 @@
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        /* 优化删除键：使用变量以便支持主题切换 */
         .btn-del { flex: 1; background: var(--btn-del-bg); color: white; transition: background 0.3s; } 
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
@@ -159,7 +156,6 @@
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
 
-    // 新增：扩展主题数据，加入对应的删除按钮颜色(btnDel)和选中边框颜色(selectedBorder)
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E' },
@@ -176,7 +172,6 @@
         root.style.setProperty('--text-brown', t.textBrown);
         root.style.setProperty('--btn-swap-pink', t.btnSwap);
         root.style.setProperty('--section-header', t.section);
-        // 新增属性写入
         root.style.setProperty('--btn-del-bg', t.btnDel);
         root.style.setProperty('--selected-border', t.selectedBorder);
     }
@@ -220,6 +215,7 @@
     function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
     function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
 
+    // 要求二：改进预览逻辑，实现绝对居中显示与自动缩放
     function updatePreview() {
         const canvas = document.getElementById('previewCanvas');
         const box = document.getElementById('previewBox');
@@ -229,14 +225,22 @@
         const dpr = window.devicePixelRatio || 1;
         canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
         ctx.scale(dpr, dpr);
+        
         const text = document.getElementById('startNum').value || "1";
         const fSize = parseInt(document.getElementById('fSize').value) || 150;
         const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
+        
+        // 计算缩放比例：将设定的字体大小映射到预览框高度的 70% 左右，确保始终可见
+        const targetHeight = rect.height * 0.7;
+        const previewScale = targetHeight / fSize;
+
+        ctx.clearRect(0, 0, rect.width, rect.height);
         ctx.save();
-        let previewScale = rect.width / 1000;
-        if (fSize < 100) previewScale *= 1.5;
+        // 将坐标原点移至画布中心
+        ctx.translate(rect.width / 2, rect.height / 2);
         ctx.scale(previewScale, previewScale);
-        drawComplexText(ctx, text, 1000, 1000 * (rect.height/rect.width), fSize, sWidth, true);
+        // 在 0,0 坐标绘制（即中心），并传入 true 触发 drawComplexText 的预览模式
+        drawComplexText(ctx, text, 0, 0, fSize, sWidth, true);
         ctx.restore();
     }
 
@@ -248,7 +252,11 @@
         const safetyPadding = (size * 0.5) + (sWidth * 0.5) + shadowOffset + 20;
         let cx, cy;
         const pos = document.getElementById('pos').value;
-        if (isPreview) { cx = w / 2; cy = h / 2; } 
+        
+        // 预览模式直接使用传入的 w,h (在 updatePreview 中传入的是 0,0 配合 translate)
+        if (isPreview) { 
+            cx = w / 2; cy = h / 2; 
+        } 
         else {
             if (pos === 'lt') { cx = safetyPadding; cy = safetyPadding; } 
             else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
@@ -256,6 +264,7 @@
             else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
             else { cx = w/2; cy = h/2; }
         }
+        
         if(document.getElementById('shEnable').checked) {
             const rgb = hexToRgb(document.getElementById('shColor').value);
             ctx.save();
@@ -356,7 +365,7 @@
         if(isSwapMode){ 
             if(swapSelection.includes(i))return; 
             swapSelection.push(i); 
-            el.classList.add('selected'); // 新增：为点击的图片添加选中状态类名
+            el.classList.add('selected'); 
             if(swapSelection.length===2){ 
                 document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; 
                 document.getElementById('swapModal').style.display='flex'; 
@@ -373,7 +382,6 @@
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
-    // 初始化预览
     setTimeout(updatePreview, 100);
 </script>
 </body>
