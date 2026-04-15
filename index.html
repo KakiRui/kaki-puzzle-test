@@ -25,7 +25,6 @@
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
         .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
         
-        /* 修改此处：使用独立的 divider-color 变量 */
         .sub-divider { border-top: 1px solid var(--divider-color); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
@@ -81,6 +80,7 @@
             <option value="gray">格调冷灰 (默认)</option>
             <option value="mint">薄荷生巧</option>
             <option value="rococo">洛可可粉</option>
+            <option value="darkPink">国风暗粉</option>
         </select>
 
         <div class="section-header"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
@@ -225,11 +225,23 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
-    // 要求二：在主题配置中新增 divider 属性，并将薄荷生巧(mint)的分割线调为更轻柔的浅色
     const themes = {
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA' },
-        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' }
+        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
+        // 在此基础上增加新配置，不动其他地方
+        darkPink: {
+            bg: '#1F2125',           // 图像最底端深色，作底层背景
+            panelBg: '#3B4858',      // 中间深灰色，作面板背景
+            textBrown: '#DAC4CE',    // 主体文字颜色（折中：标志和滑块也跟随此颜色，确保对比度）
+            section: '#DAC4CE',      // 段落标题文字，用主体文字颜色
+            accentPink: '#EEA9BD',   // 粉色边框，确保对比度
+            accentBlue: '#DAC4CE',   // 浅灰色预览框背景
+            btnSwap: '#EEA9BD',      // 粉色按钮背景
+            btnDel: '#3B4858',       // 深灰色删除按钮，与背景一致
+            selectedBorder: '#EEA9BD', // 粉色选中边框
+            divider: '#DAC4CE'       // 浅灰色分割线
+        }
     };
 
     function changeTheme() {
@@ -318,7 +330,6 @@
         e.target.value = "";
     };
 
-    // 要求一：新增底纹放大预览功能函数
     function openTextureModal() {
         const canvas = document.getElementById('texturePreviewCanvas');
         if (!canvas) return;
