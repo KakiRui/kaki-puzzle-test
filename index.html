@@ -22,13 +22,13 @@
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
         .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
         
-        /* 新增：模块内的浅色分割横线 */
+        /* 模块内的浅色分割横线样式 */
         .sub-divider { border-top: 1px solid var(--accent-blue); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
-        .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
+        .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -62,7 +62,7 @@
         <div class="section-header"><span>一键切换主题</span></div>
         <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 15px;">
             <option value="gray">格调冷灰 (默认)</option>
-            <option value="mint">薄荷生巧 (冷调参考)</option>
+            <option value="mint">薄荷生巧 (基于图片质感)</option>
             <option value="rococo">洛可可粉</option>
         </select>
 
@@ -90,6 +90,8 @@
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="fColor" value="#FFFFFF" oninput="updatePreview()"></div>
             </div>
             
+            <div class="sub-divider"></div>
+
             <div class="section-header" style="border:none; margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
             <div id="strokeSettings" class="setting-row">
                 <div style="flex:2"><label>描边粗细</label><input type="number" id="sWidth" value="15" oninput="updatePreview()"></div>
@@ -125,15 +127,8 @@
     // 主题数据定义
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3' },
-        // 薄荷生巧：已根据参考图片 (image_1.png) 逻辑调优
-        mint: { 
-            bg: '#F3E9DD',           // 参考图片奶油白底色
-            accentPink: '#84B7B9',   // 参考图片蓝绿色/淡薄荷色
-            accentBlue: '#4D3B31',   // 参考图片顶部深棕色
-            textBrown: '#4D3B31',    // 文字：深棕色
-            btnSwap: '#84B7B9',      // 按钮：蓝绿色
-            section: '#4D3B31'      // 分割线/标题文字：深棕色
-        },
+        // 薄荷生巧：已根据图片逻辑进行重塑，使用巧克力深棕和低饱和度的薄荷灰蓝
+        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E' },
         rococo: { bg: '#FFF5F7', accentPink: '#FADADD', accentBlue: '#E0F2F1', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5' }
     };
 
