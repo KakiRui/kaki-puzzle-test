@@ -41,7 +41,7 @@
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
-        /* 修改：支持独立的输入框文字颜色变量 */
+        
         input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--input-text, var(--text-brown)); outline: none; transition: border 0.3s; }
         input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; transition: border 0.3s; }
         input[type="range"] { width: 85%; appearance: none; background: transparent; padding: 0; margin: 15px 0 0 4px; display: block; }
@@ -49,10 +49,9 @@
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         
-        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s, color 0.3s; }
-        /* 修改：支持粉色按钮文字颜色变量 */
+        /* 修改：支持独立的主按钮文字颜色变量 */
+        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--btn-main-text, var(--text-brown)); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s, color 0.3s; }
         .btn-swap { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); }
-        /* 修改：支持更新拼图按钮使用独立的背景和文字颜色变量 */
         .btn-update { color: var(--update-btn-text, white); border: 1px solid rgba(0,0,0,0.1); background: var(--update-btn-bg, var(--btn-swap-pink)); }
 
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
@@ -212,7 +211,16 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="swapModal"><div class="modal-box"><h3>调换排序</h3><p id="swapText"></p><div style="display:flex; gap:10px;"><button class="btn-main btn-swap" onclick="confirmSwap()">确定</button><button class="btn-main" style="background:#ddd" onclick="closeModal('swapModal'); exitSwapMode();">取消</button></div></div></div>
+<div class="modal-overlay" id="swapModal">
+    <div class="modal-box">
+        <h3>调换排序</h3>
+        <p id="swapText"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main btn-swap" onclick="confirmSwap()">确定</button>
+            <button class="btn-main" style="background:var(--btn-cancel-bg, #ddd); color:var(--btn-cancel-text, var(--text-brown))" onclick="closeModal('swapModal'); exitSwapMode();">取消</button>
+        </div>
+    </div>
+</div>
 
 <div class="modal-overlay" id="textureViewModal">
     <div class="modal-box">
@@ -232,7 +240,6 @@
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA' },
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
-        // 专门针对黑乳酪莓做出的细致颜色配置隔离，不动其他主题的任何规则
         darkPink: {
             bg: '#3a3b40',               
             panelBg: '#1F2125', 
@@ -248,7 +255,10 @@
             inputText: '#8c445a',        
             updateBtnBg: '#7b7b83',      
             updateBtnText: '#ffffff',    
-            btnSwapText: '#ffffff'       
+            btnSwapText: '#ffffff',
+            btnMainText: '#ffffff',      /* 新增：专门把这些主按钮文字变成白色 */
+            btnCancelBg: '#7b7b83',      /* 新增：让取消按钮使用深灰底色 */
+            btnCancelText: '#ffffff'     /* 新增：让取消按钮文字变成白色 */
         }
     };
 
@@ -261,11 +271,15 @@
         root.style.setProperty('--panel-bg', t.panelBg || 'rgba(255, 255, 255, 0.9)'); 
         root.style.setProperty('--gray-btn-text', t.grayBtnText || t.textBrown);
         
-        // 动态赋值输入框颜色、更新拼图按钮颜色和粉色按钮颜色，如果该主题没设定，则 fallback 到原来的默认变量
         root.style.setProperty('--input-text', t.inputText || t.textBrown);
         root.style.setProperty('--update-btn-bg', t.updateBtnBg || t.btnSwap);
         root.style.setProperty('--update-btn-text', t.updateBtnText || 'white');
         root.style.setProperty('--btn-swap-text', t.btnSwapText || 'white');
+        
+        /* 动态赋值主按钮文字和取消按钮 */
+        root.style.setProperty('--btn-main-text', t.btnMainText || t.textBrown);
+        root.style.setProperty('--btn-cancel-bg', t.btnCancelBg || '#ddd');
+        root.style.setProperty('--btn-cancel-text', t.btnCancelText || t.textBrown);
 
         root.style.setProperty('--accent-pink', t.accentPink);
         root.style.setProperty('--accent-blue', t.accentBlue);
