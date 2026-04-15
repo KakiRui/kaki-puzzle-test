@@ -80,7 +80,7 @@
             <option value="gray">格调冷灰 (默认)</option>
             <option value="mint">薄荷生巧</option>
             <option value="rococo">洛可可粉</option>
-            <option value="darkPink">国风暗粉</option>
+            <option value="darkPink">黑乳酪莓</option>
         </select>
 
         <div class="section-header"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
@@ -231,16 +231,15 @@
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
         // 在此基础上增加新配置，不动其他地方
         darkPink: {
-            bg: '#1F2125',           // 图像最底端深色，作底层背景
-            panelBg: '#3B4858',      // 中间深灰色，作面板背景
-            textBrown: '#DAC4CE',    // 主体文字颜色（折中：标志和滑块也跟随此颜色，确保对比度）
-            section: '#DAC4CE',      // 段落标题文字，用主体文字颜色
-            accentPink: '#EEA9BD',   // 粉色边框，确保对比度
-            accentBlue: '#DAC4CE',   // 浅灰色预览框背景
-            btnSwap: '#EEA9BD',      // 粉色按钮背景
-            btnDel: '#3B4858',       // 深灰色删除按钮，与背景一致
-            selectedBorder: '#EEA9BD', // 粉色选中边框
-            divider: '#DAC4CE'       // 浅灰色分割线
+            bg: '#2d2e33',           // 图片底部的深炭灰，作为底层背景
+            textBrown: '#dfd6d4',    // 图片底部的浅灰粉，作为主体文字
+            section: '#dfd6d4',      // 次要文字保持浅灰粉
+            accentPink: '#d97f97',   // 图片底部的深灰粉，作为粉色强调色
+            accentBlue: '#7b7b83',   // 图片底部的中灰，作为灰色强调色/滑块背景
+            btnSwap: '#d97f97',      // 调换按钮背景色为深灰粉
+            btnDel: '#7b7b83',       // 删除按钮背景色为中灰
+            selectedBorder: '#d97f97', // 选中边框色
+            divider: '#7b7b83'       // 分割线颜色
         }
     };
 
