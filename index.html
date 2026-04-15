@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <title>Kaki Collage Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>Kaki Puzzle Tool</title>
     <style>
         :root {
             /* 默认：格调冷灰方案 */
@@ -28,8 +29,12 @@
         #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
+        
+        /* 改进：角标样式 */
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
+        .thumb-badge { position: absolute; top: -5px; right: -5px; background: var(--btn-swap-pink); color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; border: 1px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
@@ -50,6 +55,10 @@
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
+        
+        /* 改进：下载按钮区域样式 */
+        .download-bar { display: none; gap: 10px; margin-top: 20px; }
+        .btn-third { width: 33.33%; padding: 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -113,20 +122,34 @@
             <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
         </div>
         <button class="btn-main" style="margin-top: 20px;" onclick="generate()">生成拼图</button>
+        
+        <div class="download-bar" id="downloadBar">
+            <button class="btn-main" style="flex:1" onclick="downloadAll()">逐张下载</button>
+            <button class="btn-main btn-swap" style="flex:1" onclick="downloadZip()">打包ZIP</button>
+        </div>
     </div>
     <div id="resultContainer"></div>
 </div>
 
-<div class="modal-overlay" id="viewModal"><div class="modal-box"><h3>图片预览</h3><img id="modalImg" style="width:100%;"><button class="btn-main" onclick="closeModal('viewModal')" style="margin-top:10px">关闭</button></div></div>
+<div class="modal-overlay" id="viewModal">
+    <div class="modal-box">
+        <h3>图片预览</h3>
+        <img id="modalImg" style="width:100%;">
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
+            <button class="btn-main btn-third" style="background:#ff7675; color:white;" onclick="deleteCurrentImage()">删除图片</button>
+            <button class="btn-main" style="flex:1; margin-bottom:0" onclick="closeModal('viewModal')">关闭</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="swapModal"><div class="modal-box"><h3>调换排序</h3><p id="swapText"></p><div style="display:flex; gap:10px;"><button class="btn-main btn-swap" onclick="confirmSwap()">确定</button><button class="btn-main" style="background:#ddd" onclick="closeModal('swapModal'); exitSwapMode();">取消</button></div></div></div>
 
 <script>
-    let db, currentFiles = [], isSwapMode = false, swapSelection = [];
+    let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = null;
+    let generatedImages = []; // 存储生成的base64数据用于下载
 
-    // 主题数据定义
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3' },
-        // 薄荷生巧：已根据参考图片还原巧克力色系
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E' },
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5' }
     };
@@ -155,14 +178,30 @@
         currentFiles.forEach((file, index) => {
             const wrapper = document.createElement('div'); wrapper.className = 'thumb-wrapper';
             wrapper.onclick = () => handleThumbClick(index, wrapper);
+            
+            // 改进：增加角标
+            const badge = document.createElement('div');
+            badge.className = 'thumb-badge';
+            badge.innerText = index + 1;
+            
             const img = document.createElement('img'); img.src = URL.createObjectURL(file);
+            wrapper.appendChild(badge);
             wrapper.appendChild(img); pool.appendChild(wrapper);
         });
     }
 
     document.getElementById('fileInput').onchange = (e) => { currentFiles = currentFiles.concat(Array.from(e.target.files)); saveToDB(); e.target.value = ""; };
-    function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; }
+    function clearStorage() { currentFiles = []; saveToDB(); document.getElementById('resultContainer').innerHTML = ""; document.getElementById('downloadBar').style.display='none';}
     
+    // 改进：删除当前预览大图的功能
+    function deleteCurrentImage() {
+        if(currentPreviewIndex !== null) {
+            currentFiles.splice(currentPreviewIndex, 1);
+            closeModal('viewModal');
+            saveToDB();
+        }
+    }
+
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
     function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
@@ -171,6 +210,7 @@
     function updatePreview() {
         const canvas = document.getElementById('previewCanvas');
         const box = document.getElementById('previewBox');
+        if(!canvas) return;
         const ctx = canvas.getContext('2d');
         const rect = box.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
@@ -226,6 +266,7 @@
     async function generate() {
         if (currentFiles.length === 0) return;
         const container = document.getElementById('resultContainer'); container.innerHTML = "";
+        generatedImages = [];
         const rows = parseInt(document.getElementById('rows').value), cols = parseInt(document.getElementById('cols').value);
         const q = parseInt(document.getElementById('quality').value) / 100;
         const rSelect = document.getElementById('ratioSelect').value;
@@ -252,8 +293,37 @@
                     ctx.restore();
                 }
             }
-            const resImg = document.createElement('img'); resImg.src = canvas.toDataURL("image/jpeg", q); container.appendChild(resImg);
+            const dataUrl = canvas.toDataURL("image/jpeg", q);
+            generatedImages.push(dataUrl);
+            const resImg = document.createElement('img'); resImg.src = dataUrl; container.appendChild(resImg);
         }
+        document.getElementById('downloadBar').style.display = 'flex';
+    }
+
+    // 改进：单张下载逻辑（带防漏空隙）
+    async function downloadAll() {
+        for(let i=0; i<generatedImages.length; i++) {
+            const link = document.createElement('a');
+            link.href = generatedImages[i];
+            link.download = `Kaki_Collage_${i+1}.jpg`;
+            link.click();
+            await new Promise(r => setTimeout(r, 800)); // 800ms间隔防止拦截
+        }
+    }
+
+    // 改进：ZIP 打包下载
+    function downloadZip() {
+        const zip = new JSZip();
+        generatedImages.forEach((data, index) => {
+            const base64Data = data.split(',')[1];
+            zip.file(`Kaki_Collage_${index+1}.jpg`, base64Data, {base64: true});
+        });
+        zip.generateAsync({type:"blob"}).then(function(content) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "Kaki_Collages.zip";
+            link.click();
+        });
     }
 
     function drawCover(ctx, img, x, y, w, h) {
@@ -269,7 +339,22 @@
         return {r, g, b};
     }
     function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
-    function handleThumbClick(i, el) { if(isSwapMode){ if(swapSelection.includes(i))return; swapSelection.push(i); if(swapSelection.length===2){ document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; document.getElementById('swapModal').style.display='flex'; } }else{ document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); document.getElementById('viewModal').style.display='flex'; }}
+    
+    function handleThumbClick(i, el) { 
+        if(isSwapMode){ 
+            if(swapSelection.includes(i))return; 
+            swapSelection.push(i); 
+            if(swapSelection.length===2){ 
+                document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; 
+                document.getElementById('swapModal').style.display='flex'; 
+            } 
+        }else{ 
+            currentPreviewIndex = i; // 记录当前查看的索引
+            document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); 
+            document.getElementById('viewModal').style.display='flex'; 
+        }
+    }
+
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
     function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
