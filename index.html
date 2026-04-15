@@ -7,33 +7,37 @@
     <title>Kaki Collage Tool</title>
     <style>
         :root {
-            /* 默认：格调冷灰方案 (去除了绿色) */
+            /* 默认：格调冷灰方案 */
             --bg: #F2E4E9;            
             --panel-bg: rgba(255, 255, 255, 0.9); 
             --text-brown: #333333;    
             --section-header: #A0A0A3; 
-            --accent-pink: #C0C0C0;   /* 主色：冷灰 */
-            --accent-blue: #DCDCDC;   /* 辅助：淡灰 */
-            --btn-swap-pink: #5F5F60; /* 深层：碳黑灰 */
+            --accent-pink: #C0C0C0;   
+            --accent-blue: #DCDCDC;   
+            --btn-swap-pink: #5F5F60; 
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
         .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s; }
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
+        
+        /* 新增：模块内的浅色分割横线 */
+        .sub-divider { border-top: 1px solid var(--accent-blue); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
+
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-        .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; }
-        .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); }
+        .file-label { background: var(--accent-blue); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s; }
+        .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         .thumb-wrapper { position: relative; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; }
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
-        input[type="number"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--text-brown); outline: none; }
-        input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; }
+        input[type="number"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--text-brown); outline: none; transition: border 0.3s; }
+        input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; transition: border 0.3s; }
         input[type="range"] { width: 85%; appearance: none; background: transparent; padding: 0; margin: 15px 0 0 4px; display: block; }
-        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; transition: background 0.3s; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s; }
@@ -42,7 +46,7 @@
         .toggle-switch:checked { background: var(--accent-pink); }
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
-        .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; }
+        .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; transition: background 0.3s, border 0.3s; }
         #previewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
@@ -58,7 +62,7 @@
         <div class="section-header"><span>一键切换主题</span></div>
         <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 15px;">
             <option value="gray">格调冷灰 (默认)</option>
-            <option value="mint">薄荷生巧</option>
+            <option value="mint">薄荷生巧 (冷调参考)</option>
             <option value="rococo">洛可可粉</option>
         </select>
 
@@ -93,6 +97,8 @@
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="sColor" value="#000000" oninput="updatePreview()"></div>
             </div>
 
+            <div class="sub-divider"></div>
+
             <div class="section-header" style="border:none; margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
             <div id="shadowSettings" class="setting-row" style="display:none">
                 <div style="flex:1"><label>阴影不透明度</label><input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
@@ -119,7 +125,15 @@
     // 主题数据定义
     const themes = {
         gray: { bg: '#F2E4E9', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3' },
-        mint: { bg: '#F0F9F6', accentPink: '#AEE2D7', accentBlue: '#D7EFED', textBrown: '#4E342E', btnSwap: '#76B8A9', section: '#8D6E63' },
+        // 薄荷生巧：已根据参考图片 (image_1.png) 逻辑调优
+        mint: { 
+            bg: '#F3E9DD',           // 参考图片奶油白底色
+            accentPink: '#84B7B9',   // 参考图片蓝绿色/淡薄荷色
+            accentBlue: '#4D3B31',   // 参考图片顶部深棕色
+            textBrown: '#4D3B31',    // 文字：深棕色
+            btnSwap: '#84B7B9',      // 按钮：蓝绿色
+            section: '#4D3B31'      // 分割线/标题文字：深棕色
+        },
         rococo: { bg: '#FFF5F7', accentPink: '#FADADD', accentBlue: '#E0F2F1', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5' }
     };
 
