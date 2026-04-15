@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki Collage Tool</title>
+    <title>Kaki Collage Tool-测试</title>
     <style>
         :root {
             /* 默认：格调冷灰方案 */
@@ -48,10 +48,11 @@
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         
-        /* 统一下方大按钮样式 */
         .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--text-brown); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s; }
         .btn-swap { background: var(--btn-swap-pink); color: white; }
-        .btn-update { border: 1px solid rgba(0,0,0,0.1); } /* 增加微弱描边以区分 */
+        
+        /* 更新拼图按钮的基础样式 */
+        .btn-update { color: white; border: 1px solid rgba(0,0,0,0.1); background: var(--btn-swap-pink); }
 
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
         .toggle-switch:checked { background: var(--accent-pink); }
@@ -139,7 +140,8 @@
             </div>
             
             <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
-            <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;"> <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
+            <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
+                <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 110px;">
                     <canvas id="stickerPreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
@@ -147,10 +149,11 @@
                         <div class="file-label" style="text-align:center; display:block;">导入贴纸</div>
                         <input type="file" id="stickerInput" accept="image/*">
                     </div>
-                    <div><label>贴纸大小 (10-300%)</label><input type="range" id="stickerSize" value="75" min="10" max="300" oninput="updateStickerPreview()"></div> <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
+                    <div><label>贴纸大小 (10-300%)</label><input type="range" id="stickerSize" value="75" min="10" max="300" oninput="updateStickerPreview()"></div>
+                    <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
                 </div>
             </div>
-            <button class="btn-main btn-update" style="background:var(--accent-blue); margin-top: 15px;" onclick="generate()">更新拼图</button>
+            <button class="btn-main btn-update" style="margin-top: 15px;" id="updateSoldBtn" onclick="generate()">更新拼图</button>
         </div>
 
         <button class="btn-main" style="margin-top: 20px;" onclick="generate()">生成拼图</button>
@@ -158,7 +161,7 @@
         <div id="downloadGroup" style="display:none;">
             <div class="btn-group">
                 <button class="btn-main" style="background:var(--accent-blue)" onclick="downloadAllSingle()">单张下载</button>
-                <button class="btn-main btn-swap" onclick="downloadZip()">ZIP 打包下载</button>
+                <button class="btn-main btn-swap" id="zipDownloadBtn" onclick="downloadZip()">ZIP 打包下载</button>
             </div>
         </div>
     </div>
@@ -201,11 +204,15 @@
         root.style.setProperty('--section-header', t.section);
         root.style.setProperty('--btn-del-bg', t.btnDel);
         root.style.setProperty('--selected-border', t.selectedBorder);
+        
+        // 同步更新拼图按钮颜色为 btnSwap 颜色
+        const updateBtn = document.getElementById('updateSoldBtn');
+        if(updateBtn) updateBtn.style.backgroundColor = t.btnSwap;
     }
 
     const request = indexedDB.open("KakiDB", 1);
     request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
-    request.onsuccess = e => { db = e.target.result; loadFromDB(); };
+    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; // 初始化主题颜色
 
     function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
     function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); }; }
@@ -261,15 +268,12 @@
         if(customStickerImg) {
             const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
             const alpha = parseFloat(document.getElementById('stickerAlpha').value);
-            // 这里为了让预览图即便放大3倍也能展示部分，限制预览显示比例，但实际生成按滑块值
-            let displaySize = Math.min(sizePct, 1.0); 
-            let targetW = rect.width * displaySize;
+            // 修复预览：允许图片在视觉上变大并超出预览框
+            let targetW = rect.width * sizePct;
             let targetH = targetW * (customStickerImg.height / customStickerImg.width);
-            if (targetH > rect.height * displaySize) {
-                targetH = rect.height * displaySize;
-                targetW = targetH * (customStickerImg.width / customStickerImg.height);
-            }
+            
             ctx.globalAlpha = alpha;
+            // 居中绘制放大的图片
             ctx.drawImage(customStickerImg, (rect.width - targetW)/2, (rect.height - targetH)/2, targetW, targetH);
             ctx.globalAlpha = 1;
         } else {
@@ -395,8 +399,6 @@
                         ctx.globalAlpha = alpha;
                         let targetW = itemW * sizePct;
                         let targetH = targetW * (customStickerImg.height / customStickerImg.width);
-                        // 如果按宽度算溢出高度太多，且不是为了铺满，则按高度二次限制（此处主要保证居中展示）
-                        // 但用户既然要放大，我们允许超出范围。
                         ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
                         ctx.restore();
                     } else {
