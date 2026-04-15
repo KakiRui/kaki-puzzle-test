@@ -41,7 +41,6 @@
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
-        /* 修改：支持独立的输入框文字颜色变量 */
         input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--input-text, var(--text-brown)); outline: none; transition: border 0.3s; }
         input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; transition: border 0.3s; }
         input[type="range"] { width: 85%; appearance: none; background: transparent; padding: 0; margin: 15px 0 0 4px; display: block; }
@@ -49,11 +48,8 @@
         input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
         .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
         
-        /* 修改：支持通用主按钮文字颜色变量，解决背景和文字同色的问题 */
         .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--btn-main-text, var(--text-brown)); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s, color 0.3s; }
-        /* 修改：支持粉色按钮文字颜色变量 */
         .btn-swap { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); }
-        /* 修改：支持更新拼图按钮使用独立的背景和文字颜色变量 */
         .btn-update { color: var(--update-btn-text, white); border: 1px solid rgba(0,0,0,0.1); background: var(--update-btn-bg, var(--btn-swap-pink)); }
 
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
@@ -96,7 +92,7 @@
 
         <div class="section-header"><span>拼图参数</span></div>
         <div class="control-grid">
-            <div class="full-width"><label>拼图比例</label><select id="ratioSelect" onchange="toggleRatioInput()"><option value="1:1">1:1 正方形</option><option value="3:4">3:4 人像</option><option value="9:16">9:16 长屏</option><option value="custom">自定义比例</option></select></div>
+            <div class="full-width"><label>拼图比例</label><select id="ratioSelect" onchange="toggleRatioInput()"><option value="1:1">1:1 正方形</option><option value="3:4">3:4 人像</option><option value="9:16">9:16 长屏</option><option value="16:9">16:9 横屏</option><option value="4:3">4:3 横图</option><option value="custom">自定义比例</option></select></div>
             <div id="customRatioUI" class="full-width control-grid" style="display:none; margin-top:5px;"><div><label>宽 (px)</label><input type="number" id="ratioW" value="1"></div><div><label>高 (px)</label><input type="number" id="ratioH" value="1"></div></div>
             <div><label>行数</label><input type="number" id="rows" value="3"></div><div><label>列数</label><input type="number" id="cols" value="3"></div>
             <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="100" min="20" max="100"></div>
@@ -169,6 +165,10 @@
             <div style="margin-bottom: 10px;">
                 <label>遮挡编号 (支持逗号/顿号/横杠，如: 1, 2-10, 35)</label>
                 <input type="text" id="soldNumbers" placeholder="例如: 1, 2-5, 8、9.10">
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <input type="checkbox" class="toggle-switch" id="soldRemainingMode">
+                    <span style="font-size: 0.8rem; font-weight: 500;">以余图方式遮挡 (输入的编号为未售出，其余全遮挡)</span>
+                </div>
             </div>
 
             <div class="section-header" style="border:none; margin:0 0 10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
@@ -233,7 +233,6 @@
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA' },
         rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
-        // 专门针对黑乳酪莓做出的细致颜色配置隔离，不动其他主题的任何规则
         darkPink: {
             bg: '#2d2e33',               
             panelBg: '#1F2125', 
@@ -250,7 +249,7 @@
             updateBtnBg: '#7b7b83',      
             updateBtnText: '#ffffff',    
             btnSwapText: '#ffffff',
-            btnMainText: '#ffffff'       // 增加：用于主按钮文字变为白色
+            btnMainText: '#ffffff'
         }
     };
 
@@ -263,7 +262,6 @@
         root.style.setProperty('--panel-bg', t.panelBg || 'rgba(255, 255, 255, 0.9)'); 
         root.style.setProperty('--gray-btn-text', t.grayBtnText || t.textBrown);
         
-        // 动态赋值输入框颜色、更新拼图按钮颜色和粉色按钮颜色等，如果该主题没设定，则 fallback 到原来的默认变量
         root.style.setProperty('--input-text', t.inputText || t.textBrown);
         root.style.setProperty('--update-btn-bg', t.updateBtnBg || t.btnSwap);
         root.style.setProperty('--update-btn-text', t.updateBtnText || 'white');
@@ -285,7 +283,7 @@
     request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
 
     function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
-    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); }; }
+    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); }; }
 
     function renderPool() {
         const pool = document.getElementById('pool'); pool.innerHTML = "";
@@ -306,6 +304,7 @@
         saveToDB(); 
         e.target.value = ""; 
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
+        if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     };
     function clearStorage() { 
         currentFiles = []; 
@@ -313,8 +312,9 @@
         document.getElementById('resultContainer').innerHTML = ""; 
         document.getElementById('downloadGroup').style.display='none'; 
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
+        if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     }
-    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); } }
+    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); } }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
@@ -389,7 +389,7 @@
         }
     }
 
-    function updateStickerPreview() {
+    async function updateStickerPreview() {
         const canvas = document.getElementById('stickerPreviewCanvas');
         const box = document.getElementById('stickerPreviewBox');
         if(!canvas) return;
@@ -400,17 +400,26 @@
         ctx.scale(dpr, dpr);
         ctx.clearRect(0, 0, rect.width, rect.height);
         
+        if (currentFiles.length > 0) {
+            const firstImg = await loadImage(URL.createObjectURL(currentFiles[0]));
+            drawCover(ctx, firstImg, 0, 0, rect.width, rect.height);
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(0, 0, rect.width, rect.height);
+        }
+
         if(customStickerImg) {
             const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
             const alpha = parseFloat(document.getElementById('stickerAlpha').value);
             let targetW = rect.width * sizePct;
             let targetH = targetW * (customStickerImg.height / customStickerImg.width);
             
+            ctx.save();
             ctx.globalAlpha = alpha;
             ctx.drawImage(customStickerImg, (rect.width - targetW)/2, (rect.height - targetH)/2, targetW, targetH);
-            ctx.globalAlpha = 1;
+            ctx.restore();
         } else {
-            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -510,6 +519,8 @@
         const itemW = 1000; const itemH = itemW * (rH / rW);
         const perPage = rows * cols;
         const soldSet = getSoldNumbers();
+        const soldRawText = document.getElementById('soldNumbers').value.trim();
+        const isRemainMode = document.getElementById('soldRemainingMode').checked;
 
         for (let i = 0; i < currentFiles.length; i += perPage) {
             const canvas = document.createElement('canvas');
@@ -533,7 +544,12 @@
                     ctx.restore();
                 }
                 
-                if(soldSet.has(currentNumber)) {
+                let isSold = false;
+                if(soldRawText !== "") {
+                    isSold = isRemainMode ? !soldSet.has(currentNumber) : soldSet.has(currentNumber);
+                }
+
+                if(isSold) {
                     if(document.getElementById('stickerEnable').checked && customStickerImg) {
                         const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
                         const alpha = parseFloat(document.getElementById('stickerAlpha').value);
@@ -547,7 +563,7 @@
                         ctx.save();
                         ctx.fillStyle = 'rgba(0,0,0,0.7)';
                         ctx.fillRect(x, y, itemW, itemH);
-                        const fontSize = itemW * 0.16;
+                        const fontSize = itemW * 0.20; 
                         ctx.font = `bold ${fontSize}px sans-serif`;
                         ctx.textAlign = "center";
                         ctx.textBaseline = "middle";
@@ -564,7 +580,7 @@
                 }
 
                 let drawNum = document.getElementById('numEnable').checked;
-                if(soldSet.has(currentNumber) && !document.getElementById('soldNumEnable').checked) {
+                if(isSold && !document.getElementById('soldNumEnable').checked) {
                     drawNum = false;
                 }
 
@@ -635,7 +651,7 @@
     }
 
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
-    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); }
+    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
