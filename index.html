@@ -79,19 +79,23 @@
     <div class="panel">
         <h2>Kaki Collage Tool</h2>
         
-        <div class="section-header" style="border-bottom: 1px solid var(--accent-pink);"><span>一键切换主题</span></div>
-        <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 15px;">
-            <option value="gray">格调冷灰 (默认)</option>
-            <option value="mint">薄荷生巧</option>
-            <option value="rococo">洛可可粉</option>
-            <option value="darkPink">黑乳酪莓</option>
-        </select>
+        <div class="section-block">
+            <div class="section-header"><span>切换主题</span></div>
+            <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 0;">
+                <option value="gray">格调冷灰 (默认)</option>
+                <option value="mint">薄荷生巧</option>
+                <option value="rococo">洛可可粉</option>
+                <option value="darkPink">黑乳酪莓</option>
+            </select>
+        </div>
 
-        <div class="section-header" style="border-bottom: 1px solid var(--accent-pink);"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
-        <div class="preview-pool" id="pool"></div>
-        <div style="margin-top: 15px; margin-bottom: 20px;">
-            <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
-            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="clearStorage()">清空已存图片</button>
+        <div class="section-block">
+            <div class="section-header"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
+            <div class="preview-pool" id="pool"></div>
+            <div style="margin-top: 15px;">
+                <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 0;" onclick="clearStorage()">清空已存图片</button>
+            </div>
         </div>
 
         <div class="section-block">
@@ -144,7 +148,7 @@
         <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.1; margin-top:0; min-height: 175px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.3; margin-top:0; min-height: 195px; cursor: pointer;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px;">
