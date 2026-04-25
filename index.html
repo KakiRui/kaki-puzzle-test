@@ -86,6 +86,7 @@
                 <option value="mint">薄荷生巧</option>
                 <option value="rococo">洛可可粉</option>
                 <option value="darkPink">黑乳酪莓</option>
+                <option value="guofeng">夜宴朱红 (国风)</option>
             </select>
         </div>
 
@@ -94,7 +95,7 @@
             <div class="preview-pool" id="pool"></div>
             <div style="margin-top: 15px;">
                 <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
-                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 0;" onclick="clearStorage()">清空已存图片</button>
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="clearStorage()">清空已存图片</button>
             </div>
         </div>
 
@@ -148,10 +149,10 @@
         <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.3; margin-top:0; min-height: 195px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 190px; cursor: pointer;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
-                <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px;">
+                <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px;">
                     <div class="file-upload-wrapper" style="width:100%;">
                         <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
                         <input type="file" id="textureInput" accept="image/*">
@@ -254,6 +255,7 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
+    // 修改：新增 guofeng 国风主题配色
     const themes = {
         gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)' },
         mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)' },
@@ -276,6 +278,25 @@
             btnSwapText: '#ffffff',
             btnMainText: '#ffffff',
             sectionBg: 'rgba(123, 123, 131, 0.08)'
+        },
+        guofeng: {
+            bg: '#141111',               
+            panelBg: '#1e1a1a', 
+            textBrown: '#cf4848',        
+            section: '#a68585',          
+            accentPink: '#8c2626',       
+            accentBlue: '#362b2b',       
+            btnSwap: '#a62e2e',          
+            btnDel: '#4a3d3d',           
+            selectedBorder: '#cf4848',   
+            divider: '#423333',          
+            grayBtnText: '#e3d1d1',      
+            inputText: '#c24040',        
+            updateBtnBg: '#362b2b',      
+            updateBtnText: '#e3d1d1',    
+            btnSwapText: '#ffffff',
+            btnMainText: '#ffffff',
+            sectionBg: 'rgba(140, 38, 38, 0.08)'
         }
     };
 
