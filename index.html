@@ -18,13 +18,19 @@
             --btn-del-bg: #8A8A8A;
             --selected-border: #5F5F60;
             --divider-color: #DCDCDC;
+            --section-bg: rgba(255, 255, 255, 0.4); /* 新增模块底色变量 */
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
         .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s, background 0.3s; }
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--accent-pink); transition: border-bottom 0.3s, color 0.3s; }
         
+        /* 移除标题下划线 */
+        .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 15px 0 10px; transition: color 0.3s; }
+        
+        /* 新增：浅色底色长方形模块 */
+        .module-box { background: var(--section-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; transition: background 0.3s; }
+
         .sub-divider { border-top: 1px solid var(--divider-color); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
@@ -91,15 +97,15 @@
         </div>
 
         <div class="section-header"><span>拼图参数</span></div>
-        <div class="control-grid">
-            <div class="full-width"><label>拼图比例</label><select id="ratioSelect" onchange="toggleRatioInput()"><option value="1:1">1:1 正方形</option><option value="3:4">3:4 人像</option><option value="9:16">9:16 长屏</option><option value="16:9">16:9 横屏</option><option value="4:3">4:3 横图</option><option value="custom">自定义比例</option></select></div>
+        <div class="module-box control-grid">
+            <div class="full-width"><label>拼图比例</label><select id="ratioSelect" onchange="toggleRatioInput()"><option value="1:1">1:1 正方形</option><option value="3:4">3:4 竖图</option><option value="9:16">9:16 长屏</option><option value="16:9">16:9 横屏</option><option value="4:3">4:3 横图</option><option value="custom">自定义比例</option></select></div>
             <div id="customRatioUI" class="full-width control-grid" style="display:none; margin-top:5px;"><div><label>宽 (px)</label><input type="number" id="ratioW" value="1"></div><div><label>高 (px)</label><input type="number" id="ratioH" value="1"></div></div>
             <div><label>行数</label><input type="number" id="rows" value="3"></div><div><label>列数</label><input type="number" id="cols" value="3"></div>
             <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="100" min="20" max="100"></div>
         </div>
 
         <div class="section-header"><span>编号调整</span><input type="checkbox" class="toggle-switch" id="numEnable" checked onchange="toggleNumSection()"></div>
-        <div id="numSettings">
+        <div id="numSettings" class="module-box">
             <div style="margin-bottom: 10px;"><label>起始编号</label><input type="number" id="startNum" value="1" oninput="updatePreview()"></div>
             <div class="setting-row">
                 <div style="flex:2"><label>字体选择</label><select id="fontFamily" onchange="updatePreview()"><option value="sans-serif">系统黑体</option><option value="'Palatino', 'Georgia', serif">复古花体</option><option value="'SimSun', 'STSong', serif">经典宋体</option></select></div>
@@ -109,7 +115,7 @@
             
             <div class="sub-divider"></div>
 
-            <div class="section-header" style="border:none; margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
+            <div class="section-header" style="margin:0"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
             <div id="strokeSettings" class="setting-row">
                 <div style="flex:2"><label>描边粗细</label><input type="number" id="sWidth" value="15" oninput="updatePreview()"></div>
                 <div style="flex:1"><label>不透明度</label><input type="range" id="sAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
@@ -118,7 +124,7 @@
 
             <div class="sub-divider"></div>
 
-            <div class="section-header" style="border:none; margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
+            <div class="section-header" style="margin:0"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
             <div id="shadowSettings" class="setting-row" style="display:none">
                 <div style="flex:1"><label>阴影不透明度</label><input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
                 <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#000000" oninput="updatePreview()"></div>
@@ -127,14 +133,14 @@
             <div class="sub-divider"></div>
 
             <div class="setting-row">
-                <div style="flex:1"><label>编号位置</label><select id="pos" onchange="updatePreview()"><option value="rb">右下</option><option value="lb">左下</option><option value="rt">右上</option><option value="lt">左上</option><option value="cc">中心</option></select></div>
+                <div style="flex:1"><label>编号位置</label><select id="pos" onchange="updatePreview()"><option value="rb">右下</option><option value="lb">左下</option><option value="rt">右上</option><option value="lt">左上</option><option value="cb">正下</option><option value="cc">中心</option></select></div>
                 <div style="flex:1"><label>编号大小</label><input type="number" id="fSize" value="150" oninput="updatePreview()"></div>
             </div>
             <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
         </div>
 
         <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
-        <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
+        <div id="textureSettings" class="setting-row module-box" style="display:none; align-items: stretch; margin-bottom: 25px;">
             <div class="font-preview-box" id="texturePreviewBox" style="flex:1; margin-top:0; min-height: 160px; cursor: pointer;" onclick="openTextureModal()">
                 <canvas id="texturePreviewCanvas"></canvas>
             </div>
@@ -154,6 +160,13 @@
                     </select>
                 </div>
                 <div>
+                    <label>覆盖范围</label>
+                    <select id="textureScope" onchange="updateTexturePreview()" style="margin-bottom: 5px;">
+                        <option value="single">单图</option>
+                        <option value="whole">全图 (生成可见)</option>
+                    </select>
+                </div>
+                <div>
                     <label>不透明度</label>
                     <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateTexturePreview()">
                 </div>
@@ -161,7 +174,7 @@
         </div>
 
         <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
-        <div id="soldSettings" style="display:none;">
+        <div id="soldSettings" class="module-box" style="display:none;">
             <div style="margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <label style="margin-bottom: 0;">遮挡编号</label>
@@ -173,9 +186,9 @@
                 <div id="remainHint" style="display: none; font-size: 0.7rem; color: var(--section-header); margin-top: 5px; padding-left: 4px; transition: color 0.3s;">*输入的编号为未售出，其余全遮挡</div>
             </div>
 
-            <div class="section-header" style="border:none; margin:0 0 10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
+            <div class="section-header" style="margin:0 0 10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
             
-            <div class="section-header" style="border:none; margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
+            <div class="section-header" style="margin:0"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
             <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 25px;">
                 <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 160px;">
                     <canvas id="stickerPreviewCanvas"></canvas>
@@ -231,10 +244,11 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
+    // 新增 sectionBg 到各类主题属性中以适配模块底色
     const themes = {
-        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC' },
-        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA' },
-        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3' },
+        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(255, 255, 255, 0.4)' },
+        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(255, 255, 255, 0.5)' },
+        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(255, 255, 255, 0.5)' },
         darkPink: {
             bg: '#2d2e33',               
             panelBg: '#1F2125', 
@@ -251,7 +265,8 @@
             updateBtnBg: '#7b7b83',      
             updateBtnText: '#ffffff',    
             btnSwapText: '#ffffff',
-            btnMainText: '#ffffff'
+            btnMainText: '#ffffff',
+            sectionBg: '#2a2c31'
         }
     };
 
@@ -278,6 +293,7 @@
         root.style.setProperty('--btn-del-bg', t.btnDel);
         root.style.setProperty('--selected-border', t.selectedBorder);
         root.style.setProperty('--divider-color', t.divider); 
+        root.style.setProperty('--section-bg', t.sectionBg); 
     }
 
     const request = indexedDB.open("KakiDB", 1);
@@ -467,6 +483,7 @@
             else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
             else if (pos === 'lb') { cx = safetyPadding; cy = h - safetyPadding; } 
             else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
+            else if (pos === 'cb') { cx = w / 2; cy = h - safetyPadding; } // 新增：正下方位置逻辑
             else { cx = w/2; cy = h/2; }
         }
         if(document.getElementById('shEnable').checked) {
@@ -542,7 +559,8 @@
                 
                 drawCover(ctx, img, x, y, itemW, itemH);
                 
-                if (document.getElementById('textureEnable').checked && customTextureImg) {
+                // 新增判断：如果是单图覆盖底纹
+                if (document.getElementById('textureEnable').checked && customTextureImg && document.getElementById('textureScope').value === 'single') {
                     ctx.save();
                     ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
                     ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
@@ -597,6 +615,16 @@
                     ctx.restore();
                 }
             }
+            
+            // 新增判断：如果是全图覆盖底纹，则在拼完所有当前页面的单图后执行
+            if (document.getElementById('textureEnable').checked && customTextureImg && document.getElementById('textureScope').value === 'whole') {
+                ctx.save();
+                ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
+                ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
+                drawCover(ctx, customTextureImg, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
             generatedCanvases.push(canvas);
             const resImg = document.createElement('img'); resImg.src = canvas.toDataURL("image/jpeg", q); container.appendChild(resImg);
         }
