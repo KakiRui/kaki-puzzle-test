@@ -19,6 +19,7 @@
             --selected-border: #5F5F60;
             --divider-color: #DCDCDC;
             --section-bg: rgba(215, 222, 228, 0.2); 
+            --modal-overlay-bg: rgba(51, 51, 51, 0.7); /* 新增: 模态框背景色变量 */
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
@@ -64,7 +65,7 @@
         #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(51, 51, 51, 0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; /* 修改：使用变量 */ background: var(--modal-overlay-bg); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; transition: background 0.3s; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
@@ -255,11 +256,20 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
-    // 修改：新增 guofeng 国风主题配色
+    // 修改：国风主题 `guofeng` 更新颜色映射，并为每个主题添加 `modalOverlayBg` 以控制预览背景。
     const themes = {
-        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)' },
-        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)' },
-        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(241, 225, 227, 0.2)' },
+        gray: {
+            bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)',
+            modalOverlayBg: 'rgba(51, 51, 51, 0.7)' /* 默认 */
+        },
+        mint: {
+            bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)',
+            modalOverlayBg: 'rgba(78, 52, 46, 0.7)'
+        },
+        rococo: {
+            bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(241, 225, 227, 0.2)',
+            modalOverlayBg: 'rgba(122, 92, 92, 0.7)'
+        },
         darkPink: {
             bg: '#2d2e33',               
             panelBg: '#1F2125', 
@@ -277,26 +287,29 @@
             updateBtnText: '#ffffff',    
             btnSwapText: '#ffffff',
             btnMainText: '#ffffff',
-            sectionBg: 'rgba(123, 123, 131, 0.08)'
+            sectionBg: 'rgba(123, 123, 131, 0.08)',
+            modalOverlayBg: 'rgba(10, 10, 10, 0.8)' /* 修改: 加深黑乳酪莓预览遮罩层 */
         },
         guofeng: {
-            bg: '#141111',               
-            panelBg: '#1e1a1a', 
-            textBrown: '#cf4848',        
-            section: '#a68585',          
-            accentPink: '#8c2626',       
-            accentBlue: '#362b2b',       
-            btnSwap: '#a62e2e',          
-            btnDel: '#4a3d3d',           
-            selectedBorder: '#cf4848',   
-            divider: '#423333',          
-            grayBtnText: '#e3d1d1',      
-            inputText: '#c24040',        
-            updateBtnBg: '#362b2b',      
-            updateBtnText: '#e3d1d1',    
+            /* 修改: 根据用户参考图更新颜色，并借鉴 darkPink 明暗层级 */
+            bg: '#1A1111',               /* 深红黑色 */
+            panelBg: '#1F1B1B',          /* 面板背景，稍浅 */
+            textBrown: '#CF4848',        /* 朱红色 */
+            section: '#A68585',          /* 浅红褐色 */
+            accentPink: '#95262B',       /* 朱红色 (强调色) */
+            accentBlue: '#362B2B',       /* 深红褐色 (辅助按钮/文本框背景) */
+            btnSwap: '#A62E2E',          /* 稍浅的朱红色 */
+            btnDel: '#4A3D3D',           /* 深红褐色 (删除按钮) */
+            selectedBorder: '#CF4848',   /* 朱红色 */
+            divider: '#423333',          /* 深红褐色 */
+            grayBtnText: '#E3D1D1',      /* 浅红褐色 */
+            inputText: '#CF4848',        /* 朱红色 */
+            updateBtnBg: '#362B2B',      /* 深红褐色 */
+            updateBtnText: '#E3D1D1',    /* 浅红褐色 */
             btnSwapText: '#ffffff',
             btnMainText: '#ffffff',
-            sectionBg: 'rgba(140, 38, 38, 0.08)'
+            sectionBg: 'rgba(149, 38, 43, 0.08)', /* 透明朱红色 */
+            modalOverlayBg: 'rgba(10, 5, 5, 0.8)' /* 深色遮罩层 */
         }
     };
 
@@ -324,6 +337,9 @@
         root.style.setProperty('--selected-border', t.selectedBorder);
         root.style.setProperty('--divider-color', t.divider); 
         root.style.setProperty('--section-bg', t.sectionBg);
+        
+        /* 修改: changeTheme 函数添加设置 `--modal-overlay-bg` */
+        root.style.setProperty('--modal-overlay-bg', t.modalOverlayBg);
     }
 
     const request = indexedDB.open("KakiDB", 1);
