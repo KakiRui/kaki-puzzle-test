@@ -87,7 +87,6 @@
                 <option value="mint">薄荷生巧</option>
                 <option value="rococo">洛可可粉</option>
                 <option value="darkPink">黑乳酪莓</option>
-                <option value="guofeng">夜宴朱红 (国风)</option>
             </select>
         </div>
 
@@ -256,7 +255,7 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
-    // 修改：国风主题 `guofeng` 更新颜色映射，并为每个主题添加 `modalOverlayBg` 以控制预览背景。
+    // 修改：为每个主题添加 `modalOverlayBg` 以控制预览背景。
     const themes = {
         gray: {
             bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)',
@@ -289,27 +288,6 @@
             btnMainText: '#ffffff',
             sectionBg: 'rgba(123, 123, 131, 0.08)',
             modalOverlayBg: 'rgba(10, 10, 10, 0.8)' /* 修改: 加深黑乳酪莓预览遮罩层 */
-        },
-        guofeng: {
-            /* 修改: 根据用户参考图更新颜色，并借鉴 darkPink 明暗层级 */
-            bg: '#1A1111',               /* 深红黑色 */
-            panelBg: '#1F1B1B',          /* 面板背景，稍浅 */
-            textBrown: '#CF4848',        /* 朱红色 */
-            section: '#A68585',          /* 浅红褐色 */
-            accentPink: '#95262B',       /* 朱红色 (强调色) */
-            accentBlue: '#362B2B',       /* 深红褐色 (辅助按钮/文本框背景) */
-            btnSwap: '#A62E2E',          /* 稍浅的朱红色 */
-            btnDel: '#4A3D3D',           /* 深红褐色 (删除按钮) */
-            selectedBorder: '#CF4848',   /* 朱红色 */
-            divider: '#423333',          /* 深红褐色 */
-            grayBtnText: '#E3D1D1',      /* 浅红褐色 */
-            inputText: '#CF4848',        /* 朱红色 */
-            updateBtnBg: '#362B2B',      /* 深红褐色 */
-            updateBtnText: '#E3D1D1',    /* 浅红褐色 */
-            btnSwapText: '#ffffff',
-            btnMainText: '#ffffff',
-            sectionBg: 'rgba(149, 38, 43, 0.08)', /* 透明朱红色 */
-            modalOverlayBg: 'rgba(10, 5, 5, 0.8)' /* 深色遮罩层 */
         }
     };
 
