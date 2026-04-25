@@ -18,17 +18,15 @@
             --btn-del-bg: #8A8A8A;
             --selected-border: #5F5F60;
             --divider-color: #DCDCDC;
-            --section-bg: rgba(215, 222, 228, 0.4); /* 新增：模块背景色变量 */
+            --section-bg: rgba(215, 222, 228, 0.2); 
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
         .panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s, background 0.3s; }
         h2 { text-align: center; color: var(--text-brown); letter-spacing: 1px; font-weight: normal; margin-top: 0; font-family: 'Dancing Script', cursive; font-size: 2.5rem; }
         
-        /* 修改：去掉原来的底边框，调整 margin */
         .section-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: var(--section-header); margin: 0 0 10px 0; padding-bottom: 5px; transition: color 0.3s; }
         
-        /* 新增：浅色底长方形背景块样式 */
         .section-block { background-color: var(--section-bg); border-radius: 15px; padding: 15px; margin-bottom: 20px; transition: background-color 0.3s; }
 
         .sub-divider { border-top: 1px solid var(--divider-color); margin: 15px 0; opacity: 0.6; transition: border-top 0.3s; }
@@ -146,24 +144,24 @@
         <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1; margin-top:0; min-height: 200px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.1; margin-top:0; min-height: 175px; cursor: pointer;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
-                <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
+                <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px;">
                     <div class="file-upload-wrapper" style="width:100%;">
-                        <div class="file-label" style="text-align:center; display:block;">导入底纹</div>
+                        <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
                         <input type="file" id="textureInput" accept="image/*">
                     </div>
                     <div>
-                        <label>覆盖范围</label>
-                        <select id="textureScope" style="margin-bottom: 5px;">
+                        <label style="margin-bottom: 2px;">覆盖范围</label>
+                        <select id="textureScope" style="padding: 8px; margin-bottom: 2px;">
                             <option value="single">单图 (拼图前)</option>
                             <option value="global">全图 (拼图后)</option>
                         </select>
                     </div>
                     <div>
-                        <label>底纹效果</label>
-                        <select id="textureBlendMode" onchange="updateTexturePreview()" style="margin-bottom: 5px;">
+                        <label style="margin-bottom: 2px;">底纹效果</label>
+                        <select id="textureBlendMode" onchange="updateTexturePreview()" style="padding: 8px; margin-bottom: 2px;">
                             <option value="source-over">正常</option>
                             <option value="multiply">正片叠底</option>
                             <option value="screen">滤色</option>
@@ -172,8 +170,8 @@
                         </select>
                     </div>
                     <div>
-                        <label>不透明度</label>
-                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateTexturePreview()">
+                        <label style="margin-bottom: 2px;">不透明度</label>
+                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateTexturePreview()" style="margin: 0 0 0 4px; width: 95%;">
                     </div>
                 </div>
             </div>
@@ -253,9 +251,9 @@
     let customTextureImg = null; 
 
     const themes = {
-        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.4)' },
-        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.3)' },
-        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(241, 225, 227, 0.4)' },
+        gray: { bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)' },
+        mint: { bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)' },
+        rococo: { bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(241, 225, 227, 0.2)' },
         darkPink: {
             bg: '#2d2e33',               
             panelBg: '#1F2125', 
@@ -273,7 +271,7 @@
             updateBtnText: '#ffffff',    
             btnSwapText: '#ffffff',
             btnMainText: '#ffffff',
-            sectionBg: 'rgba(123, 123, 131, 0.15)'
+            sectionBg: 'rgba(123, 123, 131, 0.08)'
         }
     };
 
@@ -490,7 +488,7 @@
             else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
             else if (pos === 'lb') { cx = safetyPadding; cy = h - safetyPadding; } 
             else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
-            else if (pos === 'cb') { cx = w / 2; cy = h - safetyPadding; } // 新增正下方逻辑
+            else if (pos === 'cb') { cx = w / 2; cy = h - safetyPadding; } 
             else { cx = w/2; cy = h/2; }
         }
         if(document.getElementById('shEnable').checked) {
@@ -551,7 +549,7 @@
         const soldSet = getSoldNumbers();
         const soldRawText = document.getElementById('soldNumbers').value.trim();
         const isRemainMode = document.getElementById('soldRemainingMode').checked;
-        const textureScope = document.getElementById('textureScope').value; // 获取底纹作用范围
+        const textureScope = document.getElementById('textureScope').value; 
 
         for (let i = 0; i < currentFiles.length; i += perPage) {
             const canvas = document.createElement('canvas');
@@ -568,7 +566,6 @@
                 
                 drawCover(ctx, img, x, y, itemW, itemH);
                 
-                // 判断：如果是单图覆盖，在此处渲染底纹
                 if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'single') {
                     ctx.save();
                     ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
@@ -625,7 +622,6 @@
                 }
             }
 
-            // 判断：如果是全图覆盖，在此处统一渲染底纹
             if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'global') {
                 ctx.save();
                 ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
