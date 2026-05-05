@@ -87,6 +87,7 @@
                 <option value="mint">薄荷生巧</option>
                 <option value="rococo">洛可可粉</option>
                 <option value="darkPink">黑乳酪莓</option>
+                <option value="amethyst">烟灰紫晶</option>
             </select>
         </div>
 
@@ -298,6 +299,19 @@
             btnMainText: '#ffffff',
             sectionBg: 'rgba(123, 123, 131, 0.08)',
             modalOverlayBg: 'rgba(10, 10, 10, 0.8)' 
+        },
+        amethyst: {
+            bg: '#e9e6e9', 
+            accentPink: '#b5aebd', 
+            accentBlue: '#d1ced3', 
+            textBrown: '#6b646d', 
+            btnSwap: '#988f9a', 
+            section: '#988f9a', 
+            btnDel: '#8a818c', 
+            selectedBorder: '#988f9a', 
+            divider: '#d1ced3', 
+            sectionBg: 'rgba(209, 206, 211, 0.25)',
+            modalOverlayBg: 'rgba(107, 100, 109, 0.7)'
         }
     };
 
@@ -585,14 +599,12 @@
                 const img = await loadImage(URL.createObjectURL(file));
                 const ratioKey = (img.width / img.height).toFixed(2);
                 
-                // 核心修改：如果遇到不同比例，切断并创建新组
                 if (ratioKey !== currentRatioKey) {
                     currentRatioKey = ratioKey;
                     currentGroup = { rW: img.width, rH: img.height, files: [] };
                     imageGroups.push(currentGroup);
                 }
                 
-                // 将文件追加到当前正在记录的这批分组中
                 currentGroup.files.push({ file: file, originalIndex: i });
             }
         } else {
@@ -604,7 +616,6 @@
             imageGroups = [{ rW: rW, rH: rH, files: filesWithIndex }];
         }
 
-        // 遍历所有切块分组并生成
         for (const group of imageGroups) {
             const groupFiles = group.files;
             const itemW = 1000; 
