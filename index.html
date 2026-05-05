@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-禁止二传</title>
+    <title>Kaki拼图工具-测试</title>
     <style>
         :root {
             --bg: #D7DEE4;            
@@ -102,7 +102,18 @@
         <div class="section-block">
             <div class="section-header"><span>拼图参数</span></div>
             <div class="control-grid">
-                <div class="full-width"><label>拼图比例</label><select id="ratioSelect" onchange="toggleRatioInput()"><option value="1:1">1:1 正方形</option><option value="3:4">3:4 竖图</option><option value="9:16">9:16 长屏</option><option value="16:9">16:9 横屏</option><option value="4:3">4:3 横图</option><option value="custom">自定义比例</option></select></div>
+                <div class="full-width">
+                    <label>拼图比例</label>
+                    <select id="ratioSelect" onchange="toggleRatioInput()">
+                        <option value="auto">自动识别比例</option>
+                        <option value="1:1">1:1 正方形</option>
+                        <option value="3:4">3:4 竖图</option>
+                        <option value="9:16">9:16 长屏</option>
+                        <option value="16:9">16:9 横屏</option>
+                        <option value="4:3">4:3 横图</option>
+                        <option value="custom">自定义比例</option>
+                    </select>
+                </div>
                 <div id="customRatioUI" class="full-width control-grid" style="display:none; margin-top:5px;"><div><label>宽 (px)</label><input type="number" id="ratioW" value="1"></div><div><label>高 (px)</label><input type="number" id="ratioH" value="1"></div></div>
                 <div><label>行数</label><input type="number" id="rows" value="3"></div><div><label>列数</label><input type="number" id="cols" value="3"></div>
                 <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="100" min="20" max="100"></div>
@@ -560,97 +571,128 @@
         const rows = parseInt(document.getElementById('rows').value), cols = parseInt(document.getElementById('cols').value);
         const q = parseInt(document.getElementById('quality').value) / 100;
         const rSelect = document.getElementById('ratioSelect').value;
-        let rW, rH;
-        if(rSelect === 'custom') { rW = document.getElementById('ratioW').value; rH = document.getElementById('ratioH').value; }
-        else { [rW, rH] = rSelect.split(':'); }
-        const itemW = 1000; const itemH = itemW * (rH / rW);
         const perPage = rows * cols;
         const soldSet = getSoldNumbers();
         const soldRawText = document.getElementById('soldNumbers').value.trim();
         const isRemainMode = document.getElementById('soldRemainingMode').checked;
         const textureScope = document.getElementById('textureScope').value; 
 
-        for (let i = 0; i < currentFiles.length; i += perPage) {
-            const canvas = document.createElement('canvas');
-            const cRows = Math.ceil(Math.min(currentFiles.length - i, perPage) / cols);
-            const cCols = Math.min(currentFiles.length - i, cols);
-            canvas.width = cCols * itemW; canvas.height = cRows * itemH;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = "white"; ctx.fillRect(0,0,canvas.width,canvas.height);
-            
-            for (let j = 0; j < perPage && (i+j) < currentFiles.length; j++) {
-                const img = await loadImage(URL.createObjectURL(currentFiles[i+j]));
-                const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
-                const currentNumber = parseInt(document.getElementById('startNum').value) + i + j;
-                
-                drawCover(ctx, img, x, y, itemW, itemH);
-                
-                if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'single') {
-                    ctx.save();
-                    ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
-                    ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
-                    drawCover(ctx, customTextureImg, x, y, itemW, itemH);
-                    ctx.restore();
-                }
-                
-                let isSold = false;
-                if(soldRawText !== "") {
-                    isSold = isRemainMode ? !soldSet.has(currentNumber) : soldSet.has(currentNumber);
-                }
+        let imageGroups = [];
 
-                if(isSold) {
-                    if(document.getElementById('stickerEnable').checked && customStickerImg) {
-                        const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
-                        const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+        if (rSelect === 'auto') {
+            const groupMap = {};
+            for (let i = 0; i < currentFiles.length; i++) {
+                const file = currentFiles[i];
+                const img = await loadImage(URL.createObjectURL(file));
+                // 保留两位小数智能计算比例，避免轻微像素差导致无法归类
+                const ratioKey = (img.width / img.height).toFixed(2);
+                if (!groupMap[ratioKey]) {
+                    groupMap[ratioKey] = { rW: img.width, rH: img.height, files: [] };
+                }
+                // 保留原始索引以便维持正确的整体全局编号排序
+                groupMap[ratioKey].files.push({ file: file, originalIndex: i });
+            }
+            imageGroups = Object.values(groupMap);
+        } else {
+            let rW, rH;
+            if(rSelect === 'custom') { rW = document.getElementById('ratioW').value; rH = document.getElementById('ratioH').value; }
+            else { [rW, rH] = rSelect.split(':'); }
+            
+            let filesWithIndex = currentFiles.map((file, i) => ({ file: file, originalIndex: i }));
+            imageGroups = [{ rW: rW, rH: rH, files: filesWithIndex }];
+        }
+
+        // 遍历所有比例分组并生成
+        for (const group of imageGroups) {
+            const groupFiles = group.files;
+            const itemW = 1000; 
+            const itemH = itemW * (group.rH / group.rW);
+
+            for (let i = 0; i < groupFiles.length; i += perPage) {
+                const canvas = document.createElement('canvas');
+                const cRows = Math.ceil(Math.min(groupFiles.length - i, perPage) / cols);
+                const cCols = Math.min(groupFiles.length - i, cols);
+                canvas.width = cCols * itemW; canvas.height = cRows * itemH;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = "white"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                
+                for (let j = 0; j < perPage && (i+j) < groupFiles.length; j++) {
+                    const fileObj = groupFiles[i+j];
+                    const img = await loadImage(URL.createObjectURL(fileObj.file));
+                    const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
+                    
+                    // 基于图片原本的位置生成独立编号
+                    const currentNumber = parseInt(document.getElementById('startNum').value) + fileObj.originalIndex;
+                    
+                    drawCover(ctx, img, x, y, itemW, itemH);
+                    
+                    if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'single') {
                         ctx.save();
-                        ctx.globalAlpha = alpha;
-                        let targetW = itemW * sizePct;
-                        let targetH = targetW * (customStickerImg.height / customStickerImg.width);
-                        ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
+                        ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
+                        ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
+                        drawCover(ctx, customTextureImg, x, y, itemW, itemH);
                         ctx.restore();
-                    } else {
-                        ctx.save();
-                        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                        ctx.fillRect(x, y, itemW, itemH);
-                        const fontSize = itemW * 0.16; 
-                        ctx.font = `bold ${fontSize}px sans-serif`;
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.lineJoin = "round";
-                        ctx.lineWidth = itemW * 0.02;
-                        ctx.strokeStyle = 'black';
-                        ctx.fillStyle = 'white';
-                        ctx.strokeText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
-                        ctx.fillText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
-                        ctx.strokeText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
-                        ctx.fillText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                    }
+                    
+                    let isSold = false;
+                    if(soldRawText !== "") {
+                        isSold = isRemainMode ? !soldSet.has(currentNumber) : soldSet.has(currentNumber);
+                    }
+
+                    if(isSold) {
+                        if(document.getElementById('stickerEnable').checked && customStickerImg) {
+                            const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
+                            const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+                            ctx.save();
+                            ctx.globalAlpha = alpha;
+                            let targetW = itemW * sizePct;
+                            let targetH = targetW * (customStickerImg.height / customStickerImg.width);
+                            ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
+                            ctx.restore();
+                        } else {
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                            ctx.fillRect(x, y, itemW, itemH);
+                            const fontSize = itemW * 0.16; 
+                            ctx.font = `bold ${fontSize}px sans-serif`;
+                            ctx.textAlign = "center";
+                            ctx.textBaseline = "middle";
+                            ctx.lineJoin = "round";
+                            ctx.lineWidth = itemW * 0.02;
+                            ctx.strokeStyle = 'black';
+                            ctx.fillStyle = 'white';
+                            ctx.strokeText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                            ctx.fillText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                            ctx.strokeText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                            ctx.fillText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                            ctx.restore();
+                        }
+                    }
+
+                    let drawNum = document.getElementById('numEnable').checked;
+                    if(isSold && !document.getElementById('soldNumEnable').checked) {
+                        drawNum = false;
+                    }
+
+                    if(drawNum) {
+                        ctx.save(); ctx.translate(x, y);
+                        const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
+                        drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
                         ctx.restore();
                     }
                 }
 
-                let drawNum = document.getElementById('numEnable').checked;
-                if(isSold && !document.getElementById('soldNumEnable').checked) {
-                    drawNum = false;
-                }
-
-                if(drawNum) {
-                    ctx.save(); ctx.translate(x, y);
-                    const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
-                    drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
+                if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'global') {
+                    ctx.save();
+                    ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
+                    ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
+                    drawCover(ctx, customTextureImg, 0, 0, canvas.width, canvas.height);
                     ctx.restore();
                 }
-            }
 
-            if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'global') {
-                ctx.save();
-                ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
-                ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
-                drawCover(ctx, customTextureImg, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
+                generatedCanvases.push(canvas);
+                const resImg = document.createElement('img'); resImg.src = canvas.toDataURL("image/jpeg", q); container.appendChild(resImg);
             }
-
-            generatedCanvases.push(canvas);
-            const resImg = document.createElement('img'); resImg.src = canvas.toDataURL("image/jpeg", q); container.appendChild(resImg);
         }
         document.getElementById('downloadGroup').style.display = 'block';
     }
