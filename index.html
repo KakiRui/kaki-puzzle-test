@@ -19,7 +19,7 @@
             --selected-border: #5F5F60;
             --divider-color: #DCDCDC;
             --section-bg: rgba(215, 222, 228, 0.2); 
-            --modal-overlay-bg: rgba(51, 51, 51, 0.7); /* 新增: 模态框背景色变量 */
+            --modal-overlay-bg: rgba(51, 51, 51, 0.7);
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
@@ -65,7 +65,7 @@
         #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; /* 修改：使用变量 */ background: var(--modal-overlay-bg); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay-bg); z-index: 1000; align-items: center; justify-content: center; }
         .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; transition: background 0.3s; }
         
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
@@ -266,11 +266,10 @@
     let customStickerImg = null;
     let customTextureImg = null; 
 
-    // 修改：为每个主题添加 `modalOverlayBg` 以控制预览背景。
     const themes = {
         gray: {
             bg: '#D7DEE4', accentPink: '#C0C0C0', accentBlue: '#DCDCDC', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#DCDCDC', sectionBg: 'rgba(215, 222, 228, 0.2)',
-            modalOverlayBg: 'rgba(51, 51, 51, 0.7)' /* 默认 */
+            modalOverlayBg: 'rgba(51, 51, 51, 0.7)'
         },
         mint: {
             bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)',
@@ -298,7 +297,7 @@
             btnSwapText: '#ffffff',
             btnMainText: '#ffffff',
             sectionBg: 'rgba(123, 123, 131, 0.08)',
-            modalOverlayBg: 'rgba(10, 10, 10, 0.8)' /* 修改: 加深黑乳酪莓预览遮罩层 */
+            modalOverlayBg: 'rgba(10, 10, 10, 0.8)' 
         }
     };
 
@@ -326,8 +325,6 @@
         root.style.setProperty('--selected-border', t.selectedBorder);
         root.style.setProperty('--divider-color', t.divider); 
         root.style.setProperty('--section-bg', t.sectionBg);
-        
-        /* 修改: changeTheme 函数添加设置 `--modal-overlay-bg` */
         root.style.setProperty('--modal-overlay-bg', t.modalOverlayBg);
     }
 
@@ -580,19 +577,24 @@
         let imageGroups = [];
 
         if (rSelect === 'auto') {
-            const groupMap = {};
+            let currentRatioKey = null;
+            let currentGroup = null;
+            
             for (let i = 0; i < currentFiles.length; i++) {
                 const file = currentFiles[i];
                 const img = await loadImage(URL.createObjectURL(file));
-                // 保留两位小数智能计算比例，避免轻微像素差导致无法归类
                 const ratioKey = (img.width / img.height).toFixed(2);
-                if (!groupMap[ratioKey]) {
-                    groupMap[ratioKey] = { rW: img.width, rH: img.height, files: [] };
+                
+                // 核心修改：如果遇到不同比例，切断并创建新组
+                if (ratioKey !== currentRatioKey) {
+                    currentRatioKey = ratioKey;
+                    currentGroup = { rW: img.width, rH: img.height, files: [] };
+                    imageGroups.push(currentGroup);
                 }
-                // 保留原始索引以便维持正确的整体全局编号排序
-                groupMap[ratioKey].files.push({ file: file, originalIndex: i });
+                
+                // 将文件追加到当前正在记录的这批分组中
+                currentGroup.files.push({ file: file, originalIndex: i });
             }
-            imageGroups = Object.values(groupMap);
         } else {
             let rW, rH;
             if(rSelect === 'custom') { rW = document.getElementById('ratioW').value; rH = document.getElementById('ratioH').value; }
@@ -602,7 +604,7 @@
             imageGroups = [{ rW: rW, rH: rH, files: filesWithIndex }];
         }
 
-        // 遍历所有比例分组并生成
+        // 遍历所有切块分组并生成
         for (const group of imageGroups) {
             const groupFiles = group.files;
             const itemW = 1000; 
@@ -621,7 +623,6 @@
                     const img = await loadImage(URL.createObjectURL(fileObj.file));
                     const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
                     
-                    // 基于图片原本的位置生成独立编号
                     const currentNumber = parseInt(document.getElementById('startNum').value) + fileObj.originalIndex;
                     
                     drawCover(ctx, img, x, y, itemW, itemH);
