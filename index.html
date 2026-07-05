@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-测试版</title>
+    <title>Kaki拼图工具-测试</title>
     <style>
         :root {
             --bg: #D7DEE4;            
@@ -73,7 +73,7 @@
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
 
-        /* 优化底纹图层样式：精致胶囊、去滚动条、加叉号 */
+        /* 底纹图层标签定制样式 */
         .texture-tabs-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin: 2px 0 4px 0; width: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
         .texture-tabs-container::-webkit-scrollbar { display: none; }
         .texture-tab { position: relative; padding: 5px 24px 5px 12px; border-radius: 14px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--section-bg); color: var(--text-brown); border: 1px solid var(--accent-blue); transition: all 0.2s; display: inline-flex; align-items: center; flex-shrink: 0; }
@@ -82,6 +82,11 @@
         .texture-tab-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.15); color: #fff; }
         .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
         .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
+        
+        /* 存档模块样式 */
+        .storage-status-text { text-align: center; font-size: 0.75rem; color: var(--section-header); margin-top: -5px; margin-bottom: 15px; }
+        .save-checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin: 10px 0; justify-content: flex-start; text-align: left; cursor: pointer; }
+        .save-checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--btn-swap-pink); margin: 0; }
     </style>
 </head>
 <body>
@@ -239,7 +244,16 @@
             </div>
         </div>
 
-        <button class="btn-main" style="margin-top: 0;" onclick="generate()">生成拼图</button>
+        <div class="section-block" style="margin-bottom: 10px;">
+            <div class="section-header"><span>存档与数据管理</span></div>
+            <div class="storage-status-text" id="storageStatusText">正在计算本地存档占用大小...</div>
+            <div class="btn-group" style="margin-top:0;">
+                <button class="btn-main btn-swap" onclick="openSaveModal()" style="margin-bottom:0;">💾 保存当前数据</button>
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="clearAllData()">🗑️ 清空所有存档</button>
+            </div>
+        </div>
+
+        <button class="btn-main" style="margin-top: 10px;" onclick="generate()">生成拼图</button>
         
         <div id="downloadGroup" style="display:none;">
             <div class="btn-group">
@@ -283,10 +297,28 @@
 <div class="modal-overlay" id="deleteTextureModal">
     <div class="modal-box">
         <h3 style="margin-top:0; color: var(--text-brown);">删除底纹</h3>
-        <p id="deleteTextureText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-main btn-swap" onclick="confirmDeleteTexture()">确定</button>
-            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('deleteTextureModal')">取消</button>
+        <p id="deleteTextureText" style="margin: 25px 0; color: var(--text-brown); font-size: 1rem;"></p>
+        <div class="btn-group">
+            <button class="btn-main btn-flex-3" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="closeModal('deleteTextureModal')">取消</button>
+            <button class="btn-main btn-del btn-flex-1" style="margin-bottom:0;" onclick="confirmDeleteTexture()">删除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="saveConfigModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">保存当前数据</h3>
+        <div style="margin: 15px 0; padding: 0 5px;">
+            <label class="save-checkbox-row">
+                <input type="checkbox" id="saveOptImages" checked> 保存当前已选的图片列表
+            </label>
+            <label class="save-checkbox-row">
+                <input type="checkbox" id="saveOptSettings" checked> 保存当前所有设置参数(含底纹/遮挡/贴纸)
+            </label>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main btn-swap btn-flex-3" style="margin-bottom:0;" onclick="executeSaveData()">确定保存</button>
+            <button class="btn-main btn-flex-1" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="closeModal('saveConfigModal')">取消</button>
         </div>
     </div>
 </div>
@@ -375,12 +407,243 @@
         root.style.setProperty('--modal-overlay-bg', t.modalOverlayBg);
     }
 
-    const request = indexedDB.open("KakiDB", 1);
-    request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
-    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
+    const request = indexedDB.open("KakiDB", 2);
+    request.onupgradeneeded = e => { 
+        const dbRes = e.target.result;
+        if(!dbRes.objectStoreNames.contains("store")) {
+            dbRes.createObjectStore("store"); 
+        }
+    };
+    request.onsuccess = e => { 
+        db = e.target.result; 
+        loadFromDB(); 
+        changeTheme(); 
+        calculateStorageUsage();
+    }; 
 
-    function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
-    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); }; }
+    function saveToDB() { 
+        const tx = db.transaction("store", "readwrite"); 
+        tx.objectStore("store").put(currentFiles, "imageList"); 
+        tx.oncomplete = () => {
+            renderPool();
+            calculateStorageUsage();
+        }; 
+    }
+    
+    function loadFromDB() { 
+        const tx = db.transaction("store", "readonly"); 
+        const store = tx.objectStore("store");
+        
+        store.get("imageList").onsuccess = e => { 
+            if(e.target.result) {
+                currentFiles = e.target.result; 
+                renderPool(); 
+                updatePreview(); 
+            }
+        };
+        
+        // 自动读取上次存储的各种设置快照（防卡退刷新）
+        store.get("appSettings").onsuccess = async e => {
+            if(e.target.result) {
+                await restoreSettingsFromSnapshot(e.target.result);
+            }
+        };
+    }
+
+    // 存档功能：把 Image 转换成 Blob 保存到 IndexedDB
+    async function imageToBlob(img) {
+        if(!img) return null;
+        const c = document.createElement("canvas");
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        return new Promise(res => c.toBlob(res, "image/png"));
+    }
+
+    // 将当前的各种输入框参数和底纹/贴纸打包为快照
+    async function createSettingsSnapshot() {
+        saveCurrentLayerSettings();
+        
+        const layersSnapshot = [];
+        for(const layer of textureLayers) {
+            layersSnapshot.push({
+                scope: layer.scope,
+                blendMode: layer.blendMode,
+                alpha: layer.alpha,
+                imgBlob: await imageToBlob(layer.img)
+            });
+        }
+        
+        return {
+            theme: document.getElementById('themeSelector').value,
+            ratioSelect: document.getElementById('ratioSelect').value,
+            ratioW: document.getElementById('ratioW').value,
+            ratioH: document.getElementById('ratioH').value,
+            rows: document.getElementById('rows').value,
+            cols: document.getElementById('cols').value,
+            quality: document.getElementById('quality').value,
+            numEnable: document.getElementById('numEnable').checked,
+            startNum: document.getElementById('startNum').value,
+            fontFamily: document.getElementById('fontFamily').value,
+            fAlpha: document.getElementById('fAlpha').value,
+            fColor: document.getElementById('fColor').value,
+            sEnable: document.getElementById('sEnable').checked,
+            sWidth: document.getElementById('sWidth').value,
+            sAlpha: document.getElementById('sAlpha').value,
+            sColor: document.getElementById('sColor').value,
+            shEnable: document.getElementById('shEnable').checked,
+            shAlpha: document.getElementById('shAlpha').value,
+            shColor: document.getElementById('shColor').value,
+            pos: document.getElementById('pos').value,
+            fSize: document.getElementById('fSize').value,
+            textureEnable: document.getElementById('textureEnable').checked,
+            soldEnable: document.getElementById('soldEnable').checked,
+            soldRemainingMode: document.getElementById('soldRemainingMode').checked,
+            soldNumbers: document.getElementById('soldNumbers').value,
+            soldNumEnable: document.getElementById('soldNumEnable').checked,
+            stickerEnable: document.getElementById('stickerEnable').checked,
+            stickerSize: document.getElementById('stickerSize').value,
+            stickerAlpha: document.getElementById('stickerAlpha').value,
+            stickerBlob: await imageToBlob(customStickerImg),
+            textureLayers: layersSnapshot,
+            currentTextureIndex: currentTextureIndex
+        };
+    }
+
+    // 从快照恢复当前设置状态
+    async function restoreSettingsFromSnapshot(snap) {
+        if(!snap) return;
+        if(snap.theme) { document.getElementById('themeSelector').value = snap.theme; changeTheme(); }
+        if(snap.ratioSelect) { document.getElementById('ratioSelect').value = snap.ratioSelect; toggleRatioInput(); }
+        if(snap.ratioW) document.getElementById('ratioW').value = snap.ratioW;
+        if(snap.ratioH) document.getElementById('ratioH').value = snap.ratioH;
+        if(snap.rows) document.getElementById('rows').value = snap.rows;
+        if(snap.cols) document.getElementById('cols').value = snap.cols;
+        if(snap.quality) document.getElementById('quality').value = snap.quality;
+        if(snap.numEnable !== undefined) { document.getElementById('numEnable').checked = snap.numEnable; toggleNumSection(); }
+        if(snap.startNum) document.getElementById('startNum').value = snap.startNum;
+        if(snap.fontFamily) document.getElementById('fontFamily').value = snap.fontFamily;
+        if(snap.fAlpha) document.getElementById('fAlpha').value = snap.fAlpha;
+        if(snap.fColor) document.getElementById('fColor').value = snap.fColor;
+        if(snap.sEnable !== undefined) { document.getElementById('sEnable').checked = snap.sEnable; toggleStrokeSection(); }
+        if(snap.sWidth) document.getElementById('sWidth').value = snap.sWidth;
+        if(snap.sAlpha) document.getElementById('sAlpha').value = snap.sAlpha;
+        if(snap.sColor) document.getElementById('sColor').value = snap.sColor;
+        if(snap.shEnable !== undefined) { document.getElementById('shEnable').checked = snap.shEnable; toggleShadowSection(); }
+        if(snap.shAlpha) document.getElementById('shAlpha').value = snap.shAlpha;
+        if(snap.shColor) document.getElementById('shColor').value = snap.shColor;
+        if(snap.pos) document.getElementById('pos').value = snap.pos;
+        if(snap.fSize) document.getElementById('fSize').value = snap.fSize;
+        if(snap.textureEnable !== undefined) { document.getElementById('textureEnable').checked = snap.textureEnable; toggleTextureSection(); }
+        if(snap.soldEnable !== undefined) { document.getElementById('soldEnable').checked = snap.soldEnable; toggleSoldSection(); }
+        if(snap.soldRemainingMode !== undefined) { document.getElementById('soldRemainingMode').checked = snap.soldRemainingMode; toggleRemainHint(); }
+        if(snap.soldNumbers !== undefined) document.getElementById('soldNumbers').value = snap.soldNumbers;
+        if(snap.soldNumEnable !== undefined) document.getElementById('soldNumEnable').checked = snap.soldNumEnable;
+        if(snap.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = snap.stickerEnable; toggleStickerSection(); }
+        if(snap.stickerSize) document.getElementById('stickerSize').value = snap.stickerSize;
+        if(snap.stickerAlpha) document.getElementById('stickerAlpha').value = snap.stickerAlpha;
+        
+        if(snap.stickerBlob) {
+            customStickerImg = await loadImage(URL.createObjectURL(snap.stickerBlob));
+        }
+        
+        if(snap.textureLayers && snap.textureLayers.length > 0) {
+            textureLayers = [];
+            for(const l of snap.textureLayers) {
+                let imgObj = null;
+                if(l.imgBlob) {
+                    imgObj = await loadImage(URL.createObjectURL(l.imgBlob));
+                }
+                textureLayers.push({
+                    scope: l.scope || 'single',
+                    blendMode: l.blendMode || 'source-over',
+                    alpha: l.alpha !== undefined ? l.alpha : 0.5,
+                    img: imgObj
+                });
+            }
+            currentTextureIndex = snap.currentTextureIndex || 0;
+            if(currentTextureIndex >= textureLayers.length) currentTextureIndex = 0;
+            selectTextureLayer(currentTextureIndex);
+        }
+        
+        updatePreview();
+        updateTexturePreview();
+        updateStickerPreview();
+    }
+
+    // 打开存档窗口
+    function openSaveModal() {
+        document.getElementById('saveConfigModal').style.display = 'flex';
+    }
+
+    // 执行精准保存当前配置或图片
+    async function executeSaveData() {
+        const saveImg = document.getElementById('saveOptImages').checked;
+        const saveSet = document.getElementById('saveOptSettings').checked;
+        
+        if(!saveImg && !saveSet) {
+            showModalAlert("请至少勾选一项要保存的内容哦！");
+            return;
+        }
+        
+        const tx = db.transaction("store", "readwrite");
+        const store = tx.objectStore("store");
+        
+        if(saveImg) {
+            store.put(currentFiles, "imageList");
+        }
+        
+        if(saveSet) {
+            const snap = await createSettingsSnapshot();
+            store.put(snap, "appSettings");
+        }
+        
+        tx.oncomplete = () => {
+            closeModal('saveConfigModal');
+            calculateStorageUsage();
+            showModalAlert("🎉 存档成功！所选数据已安全写入本地浏览器，退出/刷新不会丢失。");
+        };
+    }
+
+    // 清空存档
+    function clearAllData() {
+        if(!confirm("确定要清空所有本地存储的数据和配置吗？此操作不可逆哦！")) return;
+        const tx = db.transaction("store", "readwrite");
+        tx.objectStore("store").clear();
+        tx.oncomplete = () => {
+            currentFiles = [];
+            customStickerImg = null;
+            textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
+            currentTextureIndex = 0;
+            renderPool();
+            renderTextureTabs();
+            updatePreview();
+            updateTexturePreview();
+            updateStickerPreview();
+            document.getElementById('resultContainer').innerHTML = "";
+            document.getElementById('downloadGroup').style.display = 'none';
+            calculateStorageUsage();
+            showModalAlert("已完成清空，所有本地存档与临时数据已被彻底移除！");
+        };
+    }
+
+    // 实时计算当前 IndexedDB 存储所占据的空间容量
+    async function calculateStorageUsage() {
+        const statusEl = document.getElementById('storageStatusText');
+        if(!statusEl) return;
+        
+        if(navigator.storage && navigator.storage.estimate) {
+            try {
+                const estimate = await navigator.storage.estimate();
+                const usedMB = (estimate.usage / (1024 * 1024)).toFixed(2);
+                statusEl.innerText = `当前已占用硬盘存档空间：≈ ${usedMB} MB`;
+            } catch(e) {
+                statusEl.innerText = "本地存档功能已开启 (状态正常)";
+            }
+        } else {
+            statusEl.innerText = "本地存档功能已开启 (状态正常)";
+        }
+    }
 
     function renderPool() {
         const pool = document.getElementById('pool'); pool.innerHTML = "";
@@ -403,6 +666,7 @@
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
         if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     };
+    
     function clearStorage() { 
         currentFiles = []; 
         saveToDB(); 
@@ -411,6 +675,7 @@
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
         if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     }
+    
     function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); } }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
@@ -433,7 +698,6 @@
         document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
     }
 
-    // 渲染带有删除叉号的底纹胶囊标签
     function renderTextureTabs() {
         const container = document.getElementById('textureTabsGroup');
         if (!container) return;
@@ -447,7 +711,6 @@
             span.innerText = `底纹${idx + 1}`;
             tab.appendChild(span);
 
-            // 右上角删除叉号（阻止冒泡）
             const closeBtn = document.createElement('span');
             closeBtn.className = 'texture-tab-close';
             closeBtn.innerHTML = '&times;';
@@ -502,12 +765,10 @@
         document.getElementById('deleteTextureModal').style.display = 'flex';
     }
 
-    // 绝对连续不跳号的底纹删除逻辑
     function confirmDeleteTexture() {
         if (targetDeleteTextureIndex === -1) return;
         
         if (textureLayers.length === 1) {
-            // 只剩1层时，删除等同于重置为空白状态，保留图层1不报错
             textureLayers[0] = { img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
             currentTextureIndex = 0;
         } else {
@@ -842,7 +1103,7 @@
                             ctx.save();
                             ctx.globalCompositeOperation = layer.blendMode;
                             ctx.globalAlpha = layer.alpha;
-                            drawCover(ctx, layer.img, 0, 0, canvas.width, canvas.height);
+                            drawCover(ctx, layer.img, x, y, canvas.width, canvas.height);
                             ctx.restore();
                         }
                     });
