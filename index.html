@@ -81,14 +81,6 @@
         .texture-tab-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.15); color: #fff; }
         .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
         .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
-
-        .archive-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--section-bg); border: 1px solid var(--accent-blue); border-radius: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
-        .archive-item.selected { border: 2px solid var(--selected-border); background: rgba(255, 255, 255, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .archive-info { flex: 1; overflow: hidden; text-align: left; }
-        .archive-title { font-weight: bold; font-size: 0.95rem; color: var(--text-brown); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .archive-meta { font-size: 0.75rem; color: var(--section-header); margin-top: 4px; }
-        .archive-del-btn { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-brown); opacity: 0.6; transition: all 0.2s; flex-shrink: 0; margin-left: 10px; font-family: sans-serif; }
-        .archive-del-btn:hover { opacity: 1; background: rgba(0, 0, 0, 0.12); color: #000; }
     </style>
 </head>
 <body>
@@ -255,17 +247,6 @@
             </div>
         </div>
     </div>
-
-    <div class="panel">
-        <div class="section-header" style="margin-bottom: 15px;">
-            <span style="font-size: 1.1rem;">存档管理</span>
-            <span style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onclick="requestClearAllArchives()">一键清空</span>
-        </div>
-        <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 15px;" onclick="openSaveArchiveModal()">+ 新增存档</button>
-        <div id="archiveListContainer" style="max-height: 260px; overflow-y: auto; padding-right: 2px;"></div>
-        <button class="btn-main btn-swap" id="restoreBtn" onclick="restoreSelectedArchive()" disabled style="margin-top: 10px; margin-bottom: 0; opacity: 0.5; transition: all 0.2s;">恢复选中存档</button>
-    </div>
-
     <div id="resultContainer"></div>
 </div>
 
@@ -309,60 +290,14 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="saveArchiveModal">
-    <div class="modal-box">
-        <h3 style="margin-top:0; color: var(--text-brown);">新增存档</h3>
-        <input type="text" id="archiveNameInput" placeholder="请输入自定义命名（如 2026.7）" style="margin: 10px 0 15px 0;">
-        <div style="text-align: left; margin-bottom: 18px; font-size: 0.85rem; color: var(--text-brown);">
-            <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; cursor: pointer;">
-                <input type="checkbox" id="saveOptImages" checked style="width:auto; margin:0; accent-color: var(--accent-pink);"> 保存当前导入图片
-            </label>
-            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" id="saveOptSettings" checked style="width:auto; margin:0; accent-color: var(--accent-pink);"> 保存当前设置 (主题/底纹/贴纸等)
-            </label>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('saveArchiveModal')">取消</button>
-            <button class="btn-main btn-swap" style="flex:1;" onclick="confirmSaveArchive()">保存</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="deleteArchiveModal">
-    <div class="modal-box">
-        <h3 style="margin-top:0; color: var(--text-brown);">删除存档</h3>
-        <p style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;">是否要删除当前存档？</p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('deleteArchiveModal')">取消</button>
-            <button class="btn-main btn-del" style="flex:1;" onclick="confirmDeleteArchive()">删除</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="clearAllArchivesModal">
-    <div class="modal-box">
-        <h3 style="margin-top:0; color: var(--text-brown);">一键清空</h3>
-        <p style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;">确定要清空所有已保存的档案吗？此操作无法撤销。</p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('clearAllArchivesModal')">取消</button>
-            <button class="btn-main btn-del" style="flex:1;" onclick="confirmClearAllArchives()">清空</button>
-        </div>
-    </div>
-</div>
-
 <script>
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
-    let customStickerBlob = null;
     
-    let textureLayers = [{ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
+    let textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
     let currentTextureIndex = 0;
     let targetDeleteTextureIndex = -1;
-
-    let archiveList = [];
-    let selectedArchiveId = null;
-    let targetDeleteArchiveId = null;
 
     const themes = {
         gray: {
@@ -454,48 +389,20 @@
     
     function loadFromDB() { 
         try {
-            if (db) {
-                const tx = db.transaction("store", "readonly"); 
-                const store = tx.objectStore("store");
-                
-                const imgReq = store.get("imageList");
-                imgReq.onsuccess = e => { 
-                    if(e.target.result) currentFiles = e.target.result; 
-                    renderPool(); updatePreview(); 
-                    if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
-                    if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
-                };
-                
-                const archReq = store.get("archiveList");
-                archReq.onsuccess = e => {
-                    if(e.target.result && Array.isArray(e.target.result) && e.target.result.length > 0) {
-                        archiveList = e.target.result;
-                        renderArchiveList();
-                    } else {
-                        loadArchiveListFromLocalStorage();
-                    }
-                };
-                archReq.onerror = () => loadArchiveListFromLocalStorage();
-            } else {
-                loadArchiveListFromLocalStorage();
-            }
+            if (!db) return;
+            const tx = db.transaction("store", "readonly"); 
+            const store = tx.objectStore("store");
+            
+            const imgReq = store.get("imageList");
+            imgReq.onsuccess = e => { 
+                if(e.target.result) currentFiles = e.target.result; 
+                renderPool(); updatePreview(); 
+                if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
+                if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
+            };
         } catch(err) {
-            loadArchiveListFromLocalStorage();
             renderPool();
         }
-    }
-
-    function loadArchiveListFromLocalStorage() {
-        try {
-            const backup = localStorage.getItem("Kaki_ArchiveList_Backup");
-            if (backup) {
-                const parsed = JSON.parse(backup);
-                if (Array.isArray(parsed)) {
-                    archiveList = parsed;
-                    renderArchiveList();
-                }
-            }
-        } catch(e) {}
     }
 
     function renderPool() {
@@ -621,7 +528,7 @@
             showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题哦");
         }
         saveCurrentLayerSettings();
-        textureLayers.push({ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
+        textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
         selectTextureLayer(textureLayers.length - 1);
     }
 
@@ -635,7 +542,7 @@
         if (targetDeleteTextureIndex === -1) return;
         
         if (textureLayers.length === 1) {
-            textureLayers[0] = { blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
+            textureLayers[0] = { img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
             currentTextureIndex = 0;
         } else {
             textureLayers.splice(targetDeleteTextureIndex, 1);
@@ -659,9 +566,7 @@
 
     document.getElementById('textureInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
-            const file = e.target.files[0];
-            textureLayers[currentTextureIndex].blob = file;
-            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(file));
+            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(e.target.files[0]));
             updateTexturePreview();
         }
         e.target.value = "";
@@ -669,8 +574,7 @@
 
     document.getElementById('stickerInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
-            customStickerBlob = e.target.files[0];
-            customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+            customStickerImg = await loadImage(URL.createObjectURL(e.target.files[0]));
             updateStickerPreview();
         }
         e.target.value = "";
@@ -1048,351 +952,6 @@
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
-    // ==========================================
-    // Base64 纯文本序列化 & 双向保险存储引擎
-    // ==========================================
-    function fileToDataURL(file) {
-        return new Promise((resolve) => {
-            if (!file) { resolve(null); return; }
-            if (typeof file === 'string') { resolve(file); return; }
-            try {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => resolve(null);
-                reader.readAsDataURL(file);
-            } catch(e) { resolve(null); }
-        });
-    }
-
-    function dataURLtoFile(dataurl, filename = "image.png") {
-        if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return null;
-        try {
-            let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-            while(n--){ u8arr[n] = bstr.charCodeAt(n); }
-            return new File([u8arr], filename, {type:mime});
-        } catch(e) { return null; }
-    }
-
-    function openSaveArchiveModal() {
-        document.getElementById('archiveNameInput').value = "";
-        document.getElementById('saveArchiveModal').style.display = 'flex';
-    }
-
-    function calculateArchiveSize(images, settings) {
-        try {
-            let totalBytes = 0;
-            if (images && images.length > 0) {
-                images.forEach(f => { 
-                    if(typeof f === 'string') totalBytes += f.length;
-                    else if(f && f.size) totalBytes += f.size; 
-                });
-            }
-            if (settings) {
-                totalBytes += JSON.stringify(settings).length;
-            }
-            if (totalBytes === 0) return "1.2 KB";
-            if (totalBytes < 1024) return totalBytes + " B";
-            if (totalBytes < 1024 * 1024) return (totalBytes / 1024).toFixed(1) + " KB";
-            return (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
-        } catch(e) { return "未知大小"; }
-    }
-
-    async function confirmSaveArchive() {
-        try {
-            const nameInput = document.getElementById('archiveNameInput');
-            const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : `存档 ${archiveList.length + 1}`;
-            const saveImages = document.getElementById('saveOptImages').checked;
-            const saveSettings = document.getElementById('saveOptSettings').checked;
-
-            if (!saveImages && !saveSettings) {
-                showModalAlert("请至少勾选保存图片或保存设置中的一项");
-                return;
-            }
-
-            saveCurrentLayerSettings();
-
-            let imagesData = null;
-            if (saveImages && currentFiles.length > 0) {
-                imagesData = await Promise.all(currentFiles.map(f => fileToDataURL(f)));
-            }
-
-            let settingsData = null;
-            if (saveSettings) {
-                const layersData = await Promise.all(textureLayers.map(async (l) => ({
-                    dataUrl: await fileToDataURL(l.blob || l.dataUrl || null),
-                    scope: l.scope || 'single',
-                    blendMode: l.blendMode || 'source-over',
-                    alpha: l.alpha !== undefined ? l.alpha : 0.5
-                })));
-                const stickerDataUrl = await fileToDataURL(customStickerBlob || null);
-
-                settingsData = {
-                    theme: document.getElementById('themeSelector').value,
-                    ratioSelect: document.getElementById('ratioSelect').value,
-                    ratioW: document.getElementById('ratioW').value,
-                    ratioH: document.getElementById('ratioH').value,
-                    rows: document.getElementById('rows').value,
-                    cols: document.getElementById('cols').value,
-                    quality: document.getElementById('quality').value,
-                    numEnable: document.getElementById('numEnable').checked,
-                    startNum: document.getElementById('startNum').value,
-                    fontFamily: document.getElementById('fontFamily').value,
-                    fAlpha: document.getElementById('fAlpha').value,
-                    fColor: document.getElementById('fColor').value,
-                    sEnable: document.getElementById('sEnable').checked,
-                    sWidth: document.getElementById('sWidth').value,
-                    sAlpha: document.getElementById('sAlpha').value,
-                    sColor: document.getElementById('sColor').value,
-                    shEnable: document.getElementById('shEnable').checked,
-                    shAlpha: document.getElementById('shAlpha').value,
-                    shColor: document.getElementById('shColor').value,
-                    pos: document.getElementById('pos').value,
-                    fSize: document.getElementById('fSize').value,
-                    textureEnable: document.getElementById('textureEnable').checked,
-                    textureLayers: layersData,
-                    soldEnable: document.getElementById('soldEnable').checked,
-                    soldRemainingMode: document.getElementById('soldRemainingMode').checked,
-                    soldNumbers: document.getElementById('soldNumbers').value,
-                    soldNumEnable: document.getElementById('soldNumEnable').checked,
-                    stickerEnable: document.getElementById('stickerEnable').checked,
-                    stickerSize: document.getElementById('stickerSize').value,
-                    stickerAlpha: document.getElementById('stickerAlpha').value,
-                    customStickerDataUrl: stickerDataUrl
-                };
-            }
-
-            const newArchive = {
-                id: Date.now(),
-                name: name,
-                timestamp: new Date().toLocaleDateString(),
-                sizeBytes: calculateArchiveSize(imagesData, settingsData),
-                hasImages: saveImages,
-                hasSettings: saveSettings,
-                images: imagesData,
-                settings: settingsData
-            };
-
-            archiveList.unshift(newArchive);
-            renderArchiveList(); 
-            closeModal('saveArchiveModal');
-            saveArchiveListToDB(); 
-            showModalAlert(`成功创建存档 "${name}"`);
-        } catch (err) {
-            showModalAlert("保存存档出错，请检查浏览器存储权限！");
-        }
-    }
-
-    function saveArchiveListToDB() {
-        try {
-            if (db) {
-                const tx = db.transaction("store", "readwrite");
-                tx.objectStore("store").put(archiveList, "archiveList");
-            }
-            try {
-                localStorage.setItem("Kaki_ArchiveList_Backup", JSON.stringify(archiveList));
-            } catch(lsErr) {}
-        } catch(err) {}
-    }
-
-    function renderArchiveList() {
-        const container = document.getElementById('archiveListContainer');
-        if (!container) return;
-        container.innerHTML = "";
-        
-        if (archiveList.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color: var(--section-header); font-size: 0.8rem; padding: 20px 0;">暂无存档</div>';
-            document.getElementById('restoreBtn').disabled = true;
-            document.getElementById('restoreBtn').style.opacity = '0.5';
-            selectedArchiveId = null;
-            return;
-        }
-
-        archiveList.forEach(arch => {
-            const item = document.createElement('div');
-            item.className = `archive-item ${arch.id === selectedArchiveId ? 'selected' : ''}`;
-            item.onclick = () => {
-                selectedArchiveId = arch.id;
-                renderArchiveList();
-            };
-            
-            const info = document.createElement('div');
-            info.className = 'archive-info';
-            
-            const title = document.createElement('div');
-            title.className = 'archive-title';
-            title.innerText = arch.name;
-            
-            const meta = document.createElement('div');
-            meta.className = 'archive-meta';
-            let tags = [];
-            if (arch.hasImages) tags.push("图片");
-            if (arch.hasSettings) tags.push("设置");
-            meta.innerText = `${arch.timestamp} | ${tags.join('+')} | ${arch.sizeBytes}`;
-            
-            info.appendChild(title);
-            info.appendChild(meta);
-            
-            const delBtn = document.createElement('div');
-            delBtn.className = 'archive-del-btn';
-            delBtn.innerHTML = '&times;';
-            delBtn.title = "删除当前存档";
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                requestDeleteArchive(arch.id);
-            };
-            
-            item.appendChild(info);
-            item.appendChild(delBtn);
-            container.appendChild(item);
-        });
-
-        const restoreBtn = document.getElementById('restoreBtn');
-        if (selectedArchiveId && archiveList.some(a => a.id === selectedArchiveId)) {
-            restoreBtn.disabled = false;
-            restoreBtn.style.opacity = '1';
-        } else {
-            restoreBtn.disabled = true;
-            restoreBtn.style.opacity = '0.5';
-        }
-    }
-
-    function requestDeleteArchive(id) {
-        targetDeleteArchiveId = id;
-        document.getElementById('deleteArchiveModal').style.display = 'flex';
-    }
-
-    function confirmDeleteArchive() {
-        if (!targetDeleteArchiveId) return;
-        archiveList = archiveList.filter(a => a.id !== targetDeleteArchiveId);
-        if (selectedArchiveId === targetDeleteArchiveId) selectedArchiveId = null;
-        targetDeleteArchiveId = null;
-        renderArchiveList();
-        saveArchiveListToDB();
-        closeModal('deleteArchiveModal');
-    }
-
-    function requestClearAllArchives() {
-        if (archiveList.length === 0) return;
-        document.getElementById('clearAllArchivesModal').style.display = 'flex';
-    }
-
-    function confirmClearAllArchives() {
-        archiveList = [];
-        selectedArchiveId = null;
-        renderArchiveList();
-        saveArchiveListToDB();
-        closeModal('clearAllArchivesModal');
-    }
-
-    async function restoreSelectedArchive() {
-        try {
-            const arch = archiveList.find(a => a.id === selectedArchiveId);
-            if (!arch) return;
-            
-            if (arch.hasImages && arch.images && Array.isArray(arch.images)) {
-                currentFiles = arch.images.map((img, idx) => {
-                    if (typeof img === 'string' && img.startsWith('data:')) {
-                        return dataURLtoFile(img, `imported_${idx + 1}.png`);
-                    }
-                    return img;
-                }).filter(f => f !== null);
-                renderPool(); 
-                saveToDB(); 
-            }
-            
-            if (arch.hasSettings && arch.settings) {
-                const s = arch.settings;
-                if(s.theme) { document.getElementById('themeSelector').value = s.theme; changeTheme(); }
-                if(s.ratioSelect) { document.getElementById('ratioSelect').value = s.ratioSelect; toggleRatioInput(); }
-                if(s.ratioW) document.getElementById('ratioW').value = s.ratioW;
-                if(s.ratioH) document.getElementById('ratioH').value = s.ratioH;
-                if(s.rows) document.getElementById('rows').value = s.rows;
-                if(s.cols) document.getElementById('cols').value = s.cols;
-                if(s.quality) document.getElementById('quality').value = s.quality;
-                
-                if(s.numEnable !== undefined) { document.getElementById('numEnable').checked = s.numEnable; toggleNumSection(); }
-                if(s.startNum) document.getElementById('startNum').value = s.startNum;
-                if(s.fontFamily) document.getElementById('fontFamily').value = s.fontFamily;
-                if(s.fAlpha) document.getElementById('fAlpha').value = s.fAlpha;
-                if(s.fColor) document.getElementById('fColor').value = s.fColor;
-                
-                if(s.sEnable !== undefined) { document.getElementById('sEnable').checked = s.sEnable; toggleStrokeSection(); }
-                if(s.sWidth) document.getElementById('sWidth').value = s.sWidth;
-                if(s.sAlpha) document.getElementById('sAlpha').value = s.sAlpha;
-                if(s.sColor) document.getElementById('sColor').value = s.sColor;
-                
-                if(s.shEnable !== undefined) { document.getElementById('shEnable').checked = s.shEnable; toggleShadowSection(); }
-                if(s.shAlpha) document.getElementById('shAlpha').value = s.shAlpha;
-                if(s.shColor) document.getElementById('shColor').value = s.shColor;
-                
-                if(s.pos) document.getElementById('pos').value = s.pos;
-                if(s.fSize) document.getElementById('fSize').value = s.fSize;
-                
-                if(s.textureEnable !== undefined) { document.getElementById('textureEnable').checked = s.textureEnable; toggleTextureSection(); }
-                if(s.textureLayers && Array.isArray(s.textureLayers)) {
-                    textureLayers = [];
-                    for (let i = 0; i < s.textureLayers.length; i++) {
-                        const lData = s.textureLayers[i];
-                        let imgObj = null;
-                        let fileBlob = null;
-                        const rawData = lData.dataUrl || lData.blob;
-                        if (rawData) {
-                            if (typeof rawData === 'string' && rawData.startsWith('data:')) {
-                                fileBlob = dataURLtoFile(rawData, `texture_${i+1}.png`);
-                                imgObj = await loadImage(rawData);
-                            } else {
-                                fileBlob = rawData;
-                                imgObj = await loadImage(URL.createObjectURL(rawData));
-                            }
-                        }
-                        textureLayers.push({
-                            blob: fileBlob,
-                            dataUrl: typeof rawData === 'string' ? rawData : null,
-                            img: imgObj,
-                            scope: lData.scope || 'single',
-                            blendMode: lData.blendMode || 'source-over',
-                            alpha: lData.alpha !== undefined ? lData.alpha : 0.5
-                        });
-                    }
-                    currentTextureIndex = 0;
-                    renderTextureTabs();
-                    selectTextureLayer(0);
-                }
-                
-                if(s.soldEnable !== undefined) { document.getElementById('soldEnable').checked = s.soldEnable; toggleSoldSection(); }
-                if(s.soldRemainingMode !== undefined) { document.getElementById('soldRemainingMode').checked = s.soldRemainingMode; toggleRemainHint(); }
-                if(s.soldNumbers !== undefined) document.getElementById('soldNumbers').value = s.soldNumbers;
-                if(s.soldNumEnable !== undefined) document.getElementById('soldNumEnable').checked = s.soldNumEnable;
-                
-                if(s.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = s.stickerEnable; toggleStickerSection(); }
-                if(s.stickerSize) document.getElementById('stickerSize').value = s.stickerSize;
-                if(s.stickerAlpha) document.getElementById('stickerAlpha').value = s.stickerAlpha;
-                
-                const rawSticker = s.customStickerDataUrl || s.customStickerBlob;
-                if(rawSticker) {
-                    if (typeof rawSticker === 'string' && rawSticker.startsWith('data:')) {
-                        customStickerBlob = dataURLtoFile(rawSticker, "sticker.png");
-                        customStickerImg = await loadImage(rawSticker);
-                    } else {
-                        customStickerBlob = rawSticker;
-                        customStickerImg = await loadImage(URL.createObjectURL(rawSticker));
-                    }
-                } else {
-                    customStickerBlob = null;
-                    customStickerImg = null;
-                }
-                updateStickerPreview();
-                updateTexturePreview();
-                updatePreview();
-            }
-            
-            showModalAlert(`已成功恢复存档 "${arch.name}"`);
-        } catch (err) {
-            showModalAlert("恢复当前存档失败，请重试！");
-        }
-    }
-
     function initToggles() {
         toggleNumSection();
         toggleStrokeSection();
