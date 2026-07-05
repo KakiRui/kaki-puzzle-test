@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-test</title>
+    <title>Kaki拼图工具-测试版</title>
     <style>
         :root {
             --bg: #D7DEE4;            
@@ -73,10 +73,11 @@
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
 
-        /* 新增功能一：底纹多层切换 Tab 样式，完全自动适配各类主题 */
-        .texture-tab-btn { padding: 4px 8px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; border: 1px solid var(--accent-blue); background: var(--section-bg); color: var(--text-brown); transition: all 0.2s; display: flex; align-items: center; justify-content: center; user-select: none; flex-shrink: 0; }
-        .texture-tab-btn.active { background: var(--accent-pink); color: var(--btn-main-text, var(--text-brown)); font-weight: bold; border-color: var(--selected-border); }
-        .texture-tab-btn.add-btn { font-weight: bold; padding: 4px 10px; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); }
+        /* 新增底纹多图层样式（自动适配所有主题配色） */
+        .texture-tabs-container { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0; width: 100%; scrollbar-width: thin; }
+        .texture-tab { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); border: 1px solid transparent; transition: all 0.2s; }
+        .texture-tab.active { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); border-color: var(--selected-border); font-weight: bold; }
+        .texture-tab-add { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; }
     </style>
 </head>
 <body>
@@ -166,7 +167,7 @@
         <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4 0 auto; margin-top:0; min-height: 190px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 190px; cursor: pointer;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px; min-width: 0;">
@@ -174,17 +175,17 @@
                         <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
                         <input type="file" id="textureInput" accept="image/*">
                     </div>
-                    <div id="textureTabsContainer" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; margin: 4px 0; max-width: 100%; scrollbar-width: none; flex-shrink: 0;"></div>
+                    <div class="texture-tabs-container" id="textureTabsGroup"></div>
                     <div>
                         <label style="margin-bottom: 2px;">覆盖范围</label>
-                        <select id="textureScope" onchange="syncTextureSettings(); updateTexturePreview();" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureScope" onchange="saveCurrentLayerSettings(); updateTexturePreview();" style="padding: 8px; margin-bottom: 2px;">
                             <option value="single">单图 (拼图前)</option>
                             <option value="global">全图 (拼图后)</option>
                         </select>
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">底纹效果</label>
-                        <select id="textureBlendMode" onchange="syncTextureSettings(); updateTexturePreview()" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureBlendMode" onchange="saveCurrentLayerSettings(); updateTexturePreview()" style="padding: 8px; margin-bottom: 2px;">
                             <option value="source-over">正常</option>
                             <option value="multiply">正片叠底</option>
                             <option value="screen">滤色</option>
@@ -194,7 +195,7 @@
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">不透明度</label>
-                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="syncTextureSettings(); updateTexturePreview()" style="margin: 0 0 0 4px; width: 95%;">
+                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="saveCurrentLayerSettings(); updateTexturePreview()" style="margin: 0 0 0 4px; width: 95%;">
                     </div>
                 </div>
             </div>
@@ -269,9 +270,9 @@
 
 <div class="modal-overlay" id="alertModal">
     <div class="modal-box">
-        <h3 id="alertModalTitle" style="margin-top: 0;">提示</h3>
-        <p id="alertModalText" style="margin: 15px 0; line-height: 1.5; font-size: 0.95rem;"></p>
-        <button class="btn-main btn-swap" onclick="closeModal('alertModal')" style="margin-bottom: 0;">确定</button>
+        <h3 id="alertTitle" style="margin-top:0; color: var(--text-brown);">提示</h3>
+        <p id="alertMessage" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
+        <button class="btn-main" onclick="closeModal('alertModal')" style="margin-bottom: 0;">确定</button>
     </div>
 </div>
 
@@ -280,9 +281,9 @@
     let generatedCanvases = []; 
     let customStickerImg = null;
     
-    // 新增：多层底纹状态管理数组
+    // 新增多层底纹存储数组与索引
     let textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
-    let activeTextureIndex = 0;
+    let currentTextureIndex = 0;
 
     const themes = {
         gray: {
@@ -417,71 +418,63 @@
         document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
     }
 
-    // 新增：渲染多底纹切页 Tab 栏
+    // 新增底纹图层渲染、选择与保存逻辑
     function renderTextureTabs() {
-        const container = document.getElementById('textureTabsContainer');
+        const container = document.getElementById('textureTabsGroup');
         if (!container) return;
-        container.innerHTML = '';
+        container.innerHTML = "";
         
-        textureLayers.forEach((layer, idx) => {
-            const btn = document.createElement('div');
-            btn.className = 'texture-tab-btn' + (idx === activeTextureIndex ? ' active' : '');
-            btn.innerText = `底纹${idx + 1}`;
-            btn.onclick = () => {
-                activeTextureIndex = idx;
-                loadTextureSettingsToUI();
-                renderTextureTabs();
-            };
-            container.appendChild(btn);
+        textureLayers.forEach((_, idx) => {
+            const tab = document.createElement('div');
+            tab.className = `texture-tab ${idx === currentTextureIndex ? 'active' : ''}`;
+            tab.innerText = `底纹${idx + 1}`;
+            tab.onclick = () => selectTextureLayer(idx);
+            container.appendChild(tab);
         });
 
         const addBtn = document.createElement('div');
-        addBtn.className = 'texture-tab-btn add-btn';
+        addBtn.className = 'texture-tab-add';
         addBtn.innerText = '+';
-        addBtn.onclick = () => {
-            if (textureLayers.length === 2) {
-                showCustomAlert('当前添加底纹过多可能会导致卡顿、闪退等问题哦');
-            }
-            textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
-            activeTextureIndex = textureLayers.length - 1;
-            loadTextureSettingsToUI();
-            renderTextureTabs();
-            updateTexturePreview();
-            setTimeout(() => { container.scrollLeft = container.scrollWidth; }, 50);
-        };
+        addBtn.onclick = addTextureLayer;
         container.appendChild(addBtn);
     }
 
-    // 新增：把当前选中层的设置写回到控制控件中
-    function loadTextureSettingsToUI() {
-        const layer = textureLayers[activeTextureIndex];
-        if (!layer) return;
+    function selectTextureLayer(index) {
+        saveCurrentLayerSettings();
+        currentTextureIndex = index;
+        const layer = textureLayers[currentTextureIndex];
         document.getElementById('textureScope').value = layer.scope;
         document.getElementById('textureBlendMode').value = layer.blendMode;
         document.getElementById('textureAlpha').value = layer.alpha;
+        renderTextureTabs();
+        updateTexturePreview();
     }
 
-    // 新增：当修改下拉框或滑动条时，实时保存至当前底纹图层对象
-    function syncTextureSettings() {
-        if (!textureLayers[activeTextureIndex]) return;
-        textureLayers[activeTextureIndex].scope = document.getElementById('textureScope').value;
-        textureLayers[activeTextureIndex].blendMode = document.getElementById('textureBlendMode').value;
-        textureLayers[activeTextureIndex].alpha = parseFloat(document.getElementById('textureAlpha').value);
+    function saveCurrentLayerSettings() {
+        if (!textureLayers[currentTextureIndex]) return;
+        textureLayers[currentTextureIndex].scope = document.getElementById('textureScope').value;
+        textureLayers[currentTextureIndex].blendMode = document.getElementById('textureBlendMode').value;
+        textureLayers[currentTextureIndex].alpha = parseFloat(document.getElementById('textureAlpha').value);
     }
 
-    // 新增：触发通用提示弹窗
-    function showCustomAlert(msg) {
-        const modalText = document.getElementById('alertModalText');
-        if (modalText) modalText.innerText = msg;
+    function addTextureLayer() {
+        if (textureLayers.length >= 2) {
+            showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题哦");
+        }
+        saveCurrentLayerSettings();
+        textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
+        selectTextureLayer(textureLayers.length - 1);
+    }
+
+    function showModalAlert(msg, title = "提示") {
+        document.getElementById('alertTitle').innerText = title;
+        document.getElementById('alertMessage').innerText = msg;
         document.getElementById('alertModal').style.display = 'flex';
     }
 
     document.getElementById('textureInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
-            const img = await loadImage(URL.createObjectURL(e.target.files[0]));
-            if (textureLayers[activeTextureIndex]) {
-                textureLayers[activeTextureIndex].img = img;
-            }
+            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(e.target.files[0]));
             updateTexturePreview();
         }
         e.target.value = "";
@@ -521,18 +514,21 @@
             ctx.fillRect(0, 0, rect.width, rect.height);
         }
 
-        let hasAnyTexture = false;
-        textureLayers.forEach(layer => {
+        let hasTexture = false;
+        textureLayers.forEach((layer, idx) => {
             if (layer.img) {
-                hasAnyTexture = true;
+                hasTexture = true;
                 ctx.save();
-                ctx.globalCompositeOperation = layer.blendMode;
-                ctx.globalAlpha = layer.alpha;
+                const mode = (idx === currentTextureIndex) ? document.getElementById('textureBlendMode').value : layer.blendMode;
+                const alpha = (idx === currentTextureIndex) ? parseFloat(document.getElementById('textureAlpha').value) : layer.alpha;
+                ctx.globalCompositeOperation = mode;
+                ctx.globalAlpha = alpha;
                 drawCover(ctx, layer.img, 0, 0, rect.width, rect.height);
                 ctx.restore();
             }
         });
-        if (!hasAnyTexture) {
+
+        if (!hasTexture) {
             ctx.fillStyle = "rgba(0,0,0,0.4)";
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
@@ -661,6 +657,7 @@
 
     async function generate() {
         if (currentFiles.length === 0) return;
+        saveCurrentLayerSettings(); // 生成前确保保存了当前编辑图层参数
         const container = document.getElementById('resultContainer'); container.innerHTML = "";
         generatedCanvases = []; 
         const rows = parseInt(document.getElementById('rows').value), cols = parseInt(document.getElementById('cols').value);
@@ -721,6 +718,7 @@
                     
                     drawCover(ctx, img, x, y, itemW, itemH);
                     
+                    // 循环绘制每个为“单图”覆盖范围的底纹图层
                     if (document.getElementById('textureEnable').checked) {
                         textureLayers.forEach(layer => {
                             if (layer.img && layer.scope === 'single') {
@@ -781,6 +779,7 @@
                     }
                 }
 
+                // 循环绘制每个为“全图”覆盖范围的底纹图层
                 if (document.getElementById('textureEnable').checked) {
                     textureLayers.forEach(layer => {
                         if (layer.img && layer.scope === 'global') {
@@ -800,7 +799,7 @@
         document.getElementById('downloadGroup').style.display = 'block';
     }
 
-    // 升级：单张下载逻辑重构，安全挂载 DOM 并加入 2 秒间隔防止漏图
+    // 修复单张下载漏图逻辑（增加为2500毫秒充足间隙）与完成后提示弹窗
     async function downloadAllSingle() {
         const q = parseInt(document.getElementById('quality').value) / 100;
         const total = generatedCanvases.length;
@@ -808,17 +807,13 @@
             const link = document.createElement('a');
             link.download = `Kaki_Collage_${i + 1}.jpg`;
             link.href = generatedCanvases[i].toDataURL("image/jpeg", q);
-            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-            
             if (i < total - 1) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 2500));
             }
         }
-        setTimeout(() => {
-            showCustomAlert(`当前 ${total} 张已全部下载完成`);
-        }, 500);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        showModalAlert(`当前 ${total} 张已全部下载完成`);
     }
 
     async function downloadZip() {
@@ -876,7 +871,7 @@
         toggleSoldSection();
         toggleStickerSection();
         toggleRemainHint();
-        renderTextureTabs(); // 初始化渲染底纹 Tab
+        renderTextureTabs(); // 初始化渲染底纹多图层
     }
     initToggles();
     
