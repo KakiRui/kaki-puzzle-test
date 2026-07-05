@@ -5,22 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-测试版</title>
+    <title>Kaki拼图工具-测试</title>
     <style>
         :root {
             --bg: #D7DEE4;            
             --panel-bg: rgba(255, 255, 255, 0.9); 
             --text-brown: #333333;    
             --section-header: #A0A0A3; 
-            --accent-pink: #C0C0C0;   
-            --accent-blue: #DCDCDC;   
+            --accent-pink: #bfbfbf;   
+            --accent-blue: #d0d0d0;   
             --btn-swap-pink: #5F5F60; 
             --btn-del-bg: #8A8A8A;
             --selected-border: #5F5F60;
-            --divider-color: #DCDCDC;
+            --divider-color: #d0d0d0;
             --section-bg: rgba(215, 222, 228, 0.2); 
             --modal-overlay-bg: rgba(51, 51, 51, 0.7);
-            --modal-cancel-bg: #bfbfbf;
         }
         body { font-family: 'Palatino', 'Georgia', serif; background-color: var(--bg); color: var(--text-brown); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s; }
         .container { width: 100%; max-width: 600px; }
@@ -35,6 +34,1263 @@
 
         .file-upload-wrapper { position: relative; width: 80px; overflow: hidden; }
         #fileInput, #stickerInput, #textureInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .file-label { background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s, color 0.3s; }
+        .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
+        
+        .thumb-wrapper { position: relative; cursor: pointer; }
+        .thumb-wrapper img { width: 100%; height: 65px; object-fit: cover; border-radius: 6px; display: block; transition: border 0.2s, opacity 0.2s; }
+        .thumb-badge { position: absolute; top: -6px; right: -6px; background: var(--btn-swap-pink); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; font-family: sans-serif; z-index: 10; transition: background 0.3s; }
+        
+        .thumb-wrapper.selected img { border: 3px solid var(--selected-border); box-sizing: border-box; opacity: 0.85; }
+
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full-width { grid-column: span 2; }
+        label { display: block; font-size: 0.75rem; margin-bottom: 4px; padding-left: 4px; font-weight: 500;}
+        input[type="number"], input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--accent-blue); border-radius: 10px; box-sizing: border-box; background: white; color: var(--input-text, var(--text-brown)); outline: none; transition: border 0.3s; }
+        input[type="color"] { -webkit-appearance: none; width: 40px; height: 40px; border: 2px solid var(--accent-blue); border-radius: 4px; cursor: pointer; padding: 0; background: none; transition: border 0.3s; }
+        input[type="range"] { width: 85%; appearance: none; background: transparent; padding: 0; margin: 15px 0 0 4px; display: block; }
+        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: var(--accent-blue); border-radius: 3px; transition: background 0.3s; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--text-brown); margin-top: -5px; }
+        .setting-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+        
+        .btn-main { width: 100%; padding: 14px; background: var(--accent-pink); color: var(--btn-main-text, var(--text-brown)); border: none; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: background 0.3s, border 0.2s, color 0.3s; }
+        .btn-swap { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); }
+        .btn-update { color: var(--update-btn-text, white); border: 1px solid rgba(0,0,0,0.1); background: var(--update-btn-bg, var(--btn-swap-pink)); }
+
+        .toggle-switch { appearance: none; width: 40px; height: 20px; background: #ddd; border-radius: 20px; position: relative; cursor: pointer; }
+        .toggle-switch:checked { background: var(--accent-pink); }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle-switch:checked::after { left: 22px; }
+        .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; transition: background 0.3s, border 0.3s; }
+        #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas { width: 100%; height: 100%; }
+        #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay-bg); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: var(--bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; transition: background 0.3s; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-del { flex: 1; background: var(--btn-del-bg); color: white; transition: background 0.3s; } 
+        .btn-flex-3 { flex: 3; }
+        .btn-flex-1 { flex: 1; }
+
+        .texture-tabs-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin: 2px 0 4px 0; width: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
+        .texture-tabs-container::-webkit-scrollbar { display: none; }
+        .texture-tab { position: relative; padding: 5px 24px 5px 12px; border-radius: 14px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--section-bg); color: var(--text-brown); border: 1px solid var(--accent-blue); transition: all 0.2s; display: inline-flex; align-items: center; flex-shrink: 0; }
+        .texture-tab.active { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); border-color: var(--selected-border); font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .texture-tab-close { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; opacity: 0.6; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
+        .texture-tab-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.15); color: #fff; }
+        .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
+        .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
+
+        /* 新增存档模块专属样式（完美适配多主题） */
+        .archive-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--section-bg); border: 1px solid var(--accent-blue); border-radius: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
+        .archive-item.selected { border: 2px solid var(--selected-border); background: rgba(255, 255, 255, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .archive-info { flex: 1; overflow: hidden; text-align: left; }
+        .archive-title { font-weight: bold; font-size: 0.95rem; color: var(--text-brown); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .archive-meta { font-size: 0.75rem; color: var(--section-header); margin-top: 4px; }
+        .archive-del-btn { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-brown); opacity: 0.6; transition: all 0.2s; flex-shrink: 0; margin-left: 10px; font-family: sans-serif; }
+        .archive-del-btn:hover { opacity: 1; background: rgba(0, 0, 0, 0.12); color: #000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>Kaki Collage Tool</h2>
+        
+        <div class="section-block">
+            <div class="section-header"><span>切换主题</span></div>
+            <select id="themeSelector" onchange="changeTheme()" style="margin-bottom: 0;">
+                <option value="gray">格调冷灰 (默认)</option>
+                <option value="mint">薄荷生巧</option>
+                <option value="rococo">洛可可粉</option>
+                <option value="darkPink">黑乳酪莓</option>
+                <option value="amethyst">褪色鸢尾</option>
+            </select>
+        </div>
+
+        <div class="section-block">
+            <div class="section-header"><span>图片导入</span><div class="file-upload-wrapper"><div class="file-label">选择图片</div><input type="file" id="fileInput" multiple accept="image/*"></div></div>
+            <div class="preview-pool" id="pool"></div>
+            <div style="margin-top: 15px;">
+                <button class="btn-main btn-swap" id="swapBtn" onclick="toggleSwapMode()">调换图片</button>
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="clearStorage()">清空已存图片</button>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <div class="section-header"><span>拼图参数</span></div>
+            <div class="control-grid">
+                <div class="full-width">
+                    <label>拼图比例</label>
+                    <select id="ratioSelect" onchange="toggleRatioInput()">
+                        <option value="auto">自动识别比例</option>
+                        <option value="1:1">1:1 正方形</option>
+                        <option value="3:4">3:4 竖图</option>
+                        <option value="9:16">9:16 长屏</option>
+                        <option value="16:9">16:9 横屏</option>
+                        <option value="4:3">4:3 横图</option>
+                        <option value="custom">自定义比例</option>
+                    </select>
+                </div>
+                <div id="customRatioUI" class="full-width control-grid" style="display:none; margin-top:5px;"><div><label>宽 (px)</label><input type="number" id="ratioW" value="1"></div><div><label>高 (px)</label><input type="number" id="ratioH" value="1"></div></div>
+                <div><label>行数</label><input type="number" id="rows" value="3"></div><div><label>列数</label><input type="number" id="cols" value="3"></div>
+                <div class="full-width"><label>导出画质 (20-100%)</label><input type="number" id="quality" value="100" min="20" max="100"></div>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <div class="section-header"><span>编号调整</span><input type="checkbox" class="toggle-switch" id="numEnable" checked onchange="toggleNumSection()"></div>
+            <div id="numSettings">
+                <div style="margin-bottom: 10px;"><label>起始编号</label><input type="number" id="startNum" value="1" oninput="updatePreview()"></div>
+                <div class="setting-row">
+                    <div style="flex:2"><label>字体选择</label><select id="fontFamily" onchange="updatePreview()"><option value="sans-serif">系统黑体</option><option value="'Palatino', 'Georgia', serif">复古花体</option><option value="'SimSun', 'STSong', serif">经典宋体</option></select></div>
+                    <div style="flex:1"><label>不透明度</label><input type="range" id="fAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
+                    <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="fColor" value="#FFFFFF" oninput="updatePreview()"></div>
+                </div>
+                
+                <div class="sub-divider"></div>
+
+                <div class="section-header"><span>描边</span><input type="checkbox" class="toggle-switch" id="sEnable" checked onchange="toggleStrokeSection()"></div>
+                <div id="strokeSettings" class="setting-row">
+                    <div style="flex:2"><label>描边粗细</label><input type="number" id="sWidth" value="15" oninput="updatePreview()"></div>
+                    <div style="flex:1"><label>不透明度</label><input type="range" id="sAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
+                    <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="sColor" value="#000000" oninput="updatePreview()"></div>
+                </div>
+
+                <div class="sub-divider"></div>
+
+                <div class="section-header"><span>字体阴影</span><input type="checkbox" class="toggle-switch" id="shEnable" onchange="toggleShadowSection()"></div>
+                <div id="shadowSettings" class="setting-row" style="display:none">
+                    <div style="flex:1"><label>阴影不透明度</label><input type="range" id="shAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updatePreview()"></div>
+                    <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="shColor" value="#000000" oninput="updatePreview()"></div>
+                </div>
+
+                <div class="sub-divider"></div>
+
+                <div class="setting-row">
+                    <div style="flex:1"><label>编号位置</label><select id="pos" onchange="updatePreview()"><option value="rb">右下</option><option value="cb">正下方</option><option value="lb">左下</option><option value="rt">右上</option><option value="lt">左上</option><option value="cc">中心</option></select></div>
+                    <div style="flex:1"><label>编号大小</label><input type="number" id="fSize" value="150" oninput="updatePreview()"></div>
+                </div>
+                <div class="font-preview-box" id="previewBox"><canvas id="previewCanvas"></canvas></div>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
+            <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 220px; height:auto; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="openTextureModal()">
+                    <canvas id="texturePreviewCanvas"></canvas>
+                </div>
+                <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px; min-width: 0;">
+                    <div class="file-upload-wrapper" style="width:100%;">
+                        <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
+                        <input type="file" id="textureInput" accept="image/*">
+                    </div>
+                    <div class="texture-tabs-container" id="textureTabsGroup"></div>
+                    <div>
+                        <label style="margin-bottom: 2px;">覆盖范围</label>
+                        <select id="textureScope" onchange="saveCurrentLayerSettings(); updateTexturePreview();" style="padding: 6px; margin-bottom: 4px; border-radius: 8px;">
+                            <option value="single">单图 (拼图前)</option>
+                            <option value="global">全图 (拼图后)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="margin-bottom: 2px;">底纹效果</label>
+                        <select id="textureBlendMode" onchange="saveCurrentLayerSettings(); updateTexturePreview()" style="padding: 6px; margin-bottom: 4px; border-radius: 8px;">
+                            <option value="source-over">正常</option>
+                            <option value="multiply">正片叠底</option>
+                            <option value="screen">滤色</option>
+                            <option value="overlay">叠加</option>
+                            <option value="soft-light">柔光</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="margin-bottom: 2px;">不透明度</label>
+                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="saveCurrentLayerSettings(); updateTexturePreview()" style="margin: 4px 0 0 4px; width: 95%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-block">
+            <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
+            <div id="soldSettings" style="display:none;">
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <label style="margin-bottom: 0;">遮挡编号</label>
+                        <label style="margin-bottom: 0; display: flex; align-items: center; gap: 4px; font-weight: normal; cursor: pointer; font-size: 0.75rem;">
+                            <input type="checkbox" id="soldRemainingMode" onchange="toggleRemainHint()" style="width: auto; margin: 0; accent-color: var(--accent-pink);"> 以余图方式遮挡
+                        </label>
+                    </div>
+                    <input type="text" id="soldNumbers" placeholder="支持逗号/顿号/横杠，如: 1, 2-5, 8、9.10">
+                    <div id="remainHint" style="display: none; font-size: 0.7rem; color: var(--section-header); margin-top: 5px; padding-left: 4px; transition: color 0.3s;">*输入的编号为未售出，其余全遮挡</div>
+                </div>
+
+                <div class="section-header" style="margin:10px 0;"><span>被遮挡图片显示编号</span><input type="checkbox" class="toggle-switch" id="soldNumEnable" checked></div>
+                
+                <div class="section-header"><span>自定义遮挡贴纸</span><input type="checkbox" class="toggle-switch" id="stickerEnable" onchange="toggleStickerSection()"></div>
+                <div id="stickerSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
+                    <div class="font-preview-box" id="stickerPreviewBox" style="flex:1; margin-top:0; min-height: 160px;">
+                        <canvas id="stickerPreviewCanvas"></canvas>
+                    </div>
+                    <div style="flex:1.5; display:flex; flex-direction:column; justify-content:space-between; padding-left:5px;">
+                        <div class="file-upload-wrapper" style="width:100%;">
+                            <div class="file-label" style="text-align:center; display:block;">导入贴纸</div>
+                            <input type="file" id="stickerInput" accept="image/*">
+                        </div>
+                        <div><label>贴纸大小 (10-300%)</label><input type="range" id="stickerSize" value="75" min="10" max="300" oninput="updateStickerPreview()"></div>
+                        <div><label>贴纸不透明度</label><input type="range" id="stickerAlpha" value="1" step="0.1" min="0" max="1" oninput="updateStickerPreview()"></div>
+                    </div>
+                </div>
+                <button class="btn-main btn-update" style="margin-top: 15px;" id="updateSoldBtn" onclick="generate()">更新拼图</button>
+            </div>
+        </div>
+
+        <button class="btn-main" style="margin-top: 0;" onclick="generate()">生成拼图</button>
+        
+        <div id="downloadGroup" style="display:none;">
+            <div class="btn-group">
+                <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="downloadAllSingle()">单张下载</button>
+                <button class="btn-main btn-swap" id="zipDownloadBtn" onclick="downloadZip()">ZIP 打包下载</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-header" style="margin-bottom: 15px;">
+            <span style="font-size: 1.1rem;">存档管理</span>
+            <span style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onclick="requestClearAllArchives()">一键清空</span>
+        </div>
+        <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 15px;" onclick="openSaveArchiveModal()">+ 新增存档</button>
+        <div id="archiveListContainer" style="max-height: 260px; overflow-y: auto; padding-right: 2px;"></div>
+        <button class="btn-main btn-swap" id="restoreBtn" onclick="restoreSelectedArchive()" disabled style="margin-top: 10px; margin-bottom: 0; opacity: 0.5; transition: all 0.2s;">恢复选中存档</button>
+    </div>
+
+    <div id="resultContainer"></div>
+</div>
+
+<div class="modal-overlay" id="viewModal">
+    <div class="modal-box">
+        <h3>图片预览</h3>
+        <img id="modalImg" style="width:100%;">
+        <div class="btn-group">
+            <button class="btn-main btn-flex-3" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('viewModal')">关闭</button>
+            <button class="btn-main btn-del btn-flex-1" onclick="deleteCurrentImage()">删除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="swapModal"><div class="modal-box"><h3>调换排序</h3><p id="swapText"></p><div style="display:flex; gap:10px;"><button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('swapModal'); exitSwapMode();">取消</button><button class="btn-main btn-swap" style="flex:1;" onclick="confirmSwap()">确定</button></div></div></div>
+
+<div class="modal-overlay" id="textureViewModal">
+    <div class="modal-box">
+        <h3>底纹预览</h3>
+        <img id="textureModalImg" style="width:100%; border-radius: 10px; margin-bottom: 10px;">
+        <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 0;" onclick="closeModal('textureViewModal')">关闭</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="alertModal">
+    <div class="modal-box">
+        <h3 id="alertTitle" style="margin-top:0; color: var(--text-brown);">提示</h3>
+        <p id="alertMessage" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
+        <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); margin-bottom: 0;" onclick="closeModal('alertModal')">确定</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteTextureModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">删除底纹</h3>
+        <p id="deleteTextureText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('deleteTextureModal')">取消</button>
+            <button class="btn-main btn-del" style="flex:1;" onclick="confirmDeleteTexture()">删除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="saveArchiveModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">新增存档</h3>
+        <input type="text" id="archiveNameInput" placeholder="请输入自定义命名（如 2026.7）" style="margin: 10px 0 15px 0;">
+        <div style="text-align: left; margin-bottom: 18px; font-size: 0.85rem; color: var(--text-brown);">
+            <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; cursor: pointer;">
+                <input type="checkbox" id="saveOptImages" checked style="width:auto; margin:0; accent-color: var(--accent-pink);"> 保存当前导入图片
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="saveOptSettings" checked style="width:auto; margin:0; accent-color: var(--accent-pink);"> 保存当前设置 (主题/底纹/贴纸等)
+            </label>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('saveArchiveModal')">取消</button>
+            <button class="btn-main btn-swap" style="flex:1;" onclick="confirmSaveArchive()">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteArchiveModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">删除存档</h3>
+        <p style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;">是否要删除当前存档？</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('deleteArchiveModal')">取消</button>
+            <button class="btn-main btn-del" style="flex:1;" onclick="confirmDeleteArchive()">删除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="clearAllArchivesModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">一键清空</h3>
+        <p style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;">确定要清空所有已保存的档案吗？此操作无法撤销。</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown)); flex:1;" onclick="closeModal('clearAllArchivesModal')">取消</button>
+            <button class="btn-main btn-del" style="flex:1;" onclick="confirmClearAllArchives()">清空</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
+    let generatedCanvases = []; 
+    let customStickerImg = null;
+    let customStickerBlob = null; // 剥离存储自定义贴纸原始流，绝对防止序列化报错
+    
+    let textureLayers = [{ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
+    let currentTextureIndex = 0;
+    let targetDeleteTextureIndex = -1;
+
+    // 存档系统全局变量
+    let archiveList = [];
+    let selectedArchiveId = null;
+    let targetDeleteArchiveId = null;
+
+    const themes = {
+        gray: {
+            bg: '#D7DEE4', accentPink: '#bfbfbf', accentBlue: '#d0d0d0', textBrown: '#333333', btnSwap: '#5F5F60', section: '#A0A0A3', btnDel: '#8A8A8A', selectedBorder: '#5F5F60', divider: '#d0d0d0', sectionBg: 'rgba(215, 222, 228, 0.2)',
+            modalOverlayBg: 'rgba(51, 51, 51, 0.7)'
+        },
+        mint: {
+            bg: '#F9FAF4', accentPink: '#C6DDDC', accentBlue: '#CADED9', textBrown: '#4E342E', btnSwap: '#4E342E', section: '#4E342E', btnDel: '#795548', selectedBorder: '#4E342E', divider: '#E4EFEA', sectionBg: 'rgba(202, 222, 217, 0.15)',
+            modalOverlayBg: 'rgba(78, 52, 46, 0.7)'
+        },
+        rococo: {
+            bg: '#FFF1F3', accentPink: '#E8C5C8', accentBlue: '#F1E1E3', textBrown: '#7A5C5C', btnSwap: '#D4A5A5', section: '#D4A5A5', btnDel: '#E08283', selectedBorder: '#D4A5A5', divider: '#F1E1E3', sectionBg: 'rgba(241, 225, 227, 0.2)',
+            modalOverlayBg: 'rgba(122, 92, 92, 0.7)'
+        },
+        darkPink: {
+            bg: '#2d2e33',               
+            panelBg: '#1F2125', 
+            textBrown: '#d97f97',        
+            section: '#e2abb4',          
+            accentPink: '#d97f97',       
+            accentBlue: '#7b7b83',       
+            btnSwap: '#d97f97',          
+            btnDel: '#7b7b83',           
+            selectedBorder: '#d97f97',   
+            divider: '#7b7b83',          
+            grayBtnText: '#ffffff',      
+            inputText: '#8c445a',        
+            updateBtnBg: '#7b7b83',      
+            updateBtnText: '#ffffff',    
+            btnSwapText: '#ffffff',
+            btnMainText: '#ffffff',
+            sectionBg: 'rgba(123, 123, 131, 0.08)',
+            modalOverlayBg: 'rgba(10, 10, 10, 0.8)' 
+        },
+        amethyst: {
+            bg: '#e9e6e9', 
+            accentPink: '#b5aebd', 
+            accentBlue: '#d1ced3', 
+            textBrown: '#6b646d', 
+            btnSwap: '#988f9a', 
+            section: '#988f9a', 
+            btnDel: '#8a818c', 
+            selectedBorder: '#988f9a', 
+            divider: '#d1ced3', 
+            sectionBg: 'rgba(209, 206, 211, 0.25)',
+            modalOverlayBg: 'rgba(107, 100, 109, 0.7)'
+        }
+    };
+
+    function changeTheme() {
+        const selected = document.getElementById('themeSelector').value;
+        const t = themes[selected];
+        const root = document.documentElement;
+        
+        root.style.setProperty('--bg', t.bg);
+        root.style.setProperty('--panel-bg', t.panelBg || 'rgba(255, 255, 255, 0.9)'); 
+        root.style.setProperty('--gray-btn-text', t.grayBtnText || t.textBrown);
+        
+        root.style.setProperty('--input-text', t.inputText || t.textBrown);
+        root.style.setProperty('--update-btn-bg', t.updateBtnBg || t.btnSwap);
+        root.style.setProperty('--update-btn-text', t.updateBtnText || 'white');
+        root.style.setProperty('--btn-swap-text', t.btnSwapText || 'white');
+        root.style.setProperty('--btn-main-text', t.btnMainText || t.textBrown);
+
+        root.style.setProperty('--accent-pink', t.accentPink);
+        root.style.setProperty('--accent-blue', t.accentBlue);
+        root.style.setProperty('--text-brown', t.textBrown);
+        root.style.setProperty('--btn-swap-pink', t.btnSwap);
+        root.style.setProperty('--section-header', t.section);
+        root.style.setProperty('--btn-del-bg', t.btnDel);
+        root.style.setProperty('--selected-border', t.selectedBorder);
+        root.style.setProperty('--divider-color', t.divider); 
+        root.style.setProperty('--section-bg', t.sectionBg);
+        root.style.setProperty('--modal-overlay-bg', t.modalOverlayBg);
+    }
+
+    const request = indexedDB.open("KakiDB", 1);
+    request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
+    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
+
+    function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
+    
+    function loadFromDB() { 
+        const tx = db.transaction("store", "readonly"); 
+        tx.objectStore("store").get("imageList").onsuccess = e => { 
+            if(e.target.result) currentFiles = e.target.result; 
+            renderPool(); updatePreview(); 
+            if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
+            if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
+        };
+        tx.objectStore("store").get("archiveList").onsuccess = e => {
+            if(e.target.result) archiveList = e.target.result;
+            renderArchiveList();
+        };
+    }
+
+    function renderPool() {
+        const pool = document.getElementById('pool'); pool.innerHTML = "";
+        currentFiles.forEach((file, index) => {
+            const wrapper = document.createElement('div'); wrapper.className = 'thumb-wrapper';
+            wrapper.onclick = () => handleThumbClick(index, wrapper);
+            const badge = document.createElement('div');
+            badge.className = 'thumb-badge';
+            badge.innerText = index + 1;
+            wrapper.appendChild(badge);
+            const img = document.createElement('img'); img.src = URL.createObjectURL(file);
+            wrapper.appendChild(img); pool.appendChild(wrapper);
+        });
+    }
+
+    document.getElementById('fileInput').onchange = (e) => { 
+        currentFiles = currentFiles.concat(Array.from(e.target.files)); 
+        saveToDB(); 
+        e.target.value = ""; 
+        if(document.getElementById('textureEnable').checked) updateTexturePreview();
+        if(document.getElementById('stickerEnable').checked) updateStickerPreview();
+    };
+    function clearStorage() { 
+        currentFiles = []; 
+        saveToDB(); 
+        document.getElementById('resultContainer').innerHTML = ""; 
+        document.getElementById('downloadGroup').style.display='none'; 
+        if(document.getElementById('textureEnable').checked) updateTexturePreview();
+        if(document.getElementById('stickerEnable').checked) updateStickerPreview();
+    }
+    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); } }
+
+    function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
+    function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
+    function toggleStrokeSection() { document.getElementById('strokeSettings').style.display = document.getElementById('sEnable').checked ? 'flex' : 'none'; updatePreview(); }
+    function toggleShadowSection() { document.getElementById('shadowSettings').style.display = document.getElementById('shEnable').checked ? 'flex' : 'none'; updatePreview(); }
+    
+    function toggleTextureSection() { 
+        document.getElementById('textureSettings').style.display = document.getElementById('textureEnable').checked ? 'flex' : 'none'; 
+        if(document.getElementById('textureEnable').checked) setTimeout(updateTexturePreview, 50);
+    }
+    
+    function toggleSoldSection() { document.getElementById('soldSettings').style.display = document.getElementById('soldEnable').checked ? 'block' : 'none'; }
+    function toggleStickerSection() { 
+        document.getElementById('stickerSettings').style.display = document.getElementById('stickerEnable').checked ? 'flex' : 'none'; 
+        if(document.getElementById('stickerEnable').checked) setTimeout(updateStickerPreview, 50);
+    }
+    
+    function toggleRemainHint() {
+        document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
+    }
+
+    function renderTextureTabs() {
+        const container = document.getElementById('textureTabsGroup');
+        if (!container) return;
+        container.innerHTML = "";
+        
+        textureLayers.forEach((_, idx) => {
+            const tab = document.createElement('div');
+            tab.className = `texture-tab ${idx === currentTextureIndex ? 'active' : ''}`;
+            
+            const span = document.createElement('span');
+            span.innerText = `底纹${idx + 1}`;
+            tab.appendChild(span);
+
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'texture-tab-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.title = "删除当前底纹";
+            closeBtn.onclick = (e) => {
+                e.stopPropagation(); 
+                requestDeleteTexture(idx);
+            };
+            tab.appendChild(closeBtn);
+
+            tab.onclick = () => selectTextureLayer(idx);
+            container.appendChild(tab);
+        });
+
+        const addBtn = document.createElement('div');
+        addBtn.className = 'texture-tab-add';
+        addBtn.innerText = '+';
+        addBtn.onclick = addTextureLayer;
+        container.appendChild(addBtn);
+    }
+
+    function selectTextureLayer(index) {
+        saveCurrentLayerSettings();
+        currentTextureIndex = index;
+        const layer = textureLayers[currentTextureIndex];
+        document.getElementById('textureScope').value = layer.scope;
+        document.getElementById('textureBlendMode').value = layer.blendMode;
+        document.getElementById('textureAlpha').value = layer.alpha;
+        renderTextureTabs();
+        updateTexturePreview();
+    }
+
+    function saveCurrentLayerSettings() {
+        if (!textureLayers[currentTextureIndex]) return;
+        textureLayers[currentTextureIndex].scope = document.getElementById('textureScope').value;
+        textureLayers[currentTextureIndex].blendMode = document.getElementById('textureBlendMode').value;
+        textureLayers[currentTextureIndex].alpha = parseFloat(document.getElementById('textureAlpha').value);
+    }
+
+    function addTextureLayer() {
+        if (textureLayers.length >= 2) {
+            showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题");
+        }
+        saveCurrentLayerSettings();
+        textureLayers.push({ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
+        selectTextureLayer(textureLayers.length - 1);
+    }
+
+    function requestDeleteTexture(index) {
+        targetDeleteTextureIndex = index;
+        document.getElementById('deleteTextureText').innerText = `是否删除当前的“底纹${index + 1}”？`;
+        document.getElementById('deleteTextureModal').style.display = 'flex';
+    }
+
+    function confirmDeleteTexture() {
+        if (targetDeleteTextureIndex === -1) return;
+        
+        if (textureLayers.length === 1) {
+            textureLayers[0] = { blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
+            currentTextureIndex = 0;
+        } else {
+            textureLayers.splice(targetDeleteTextureIndex, 1);
+            if (currentTextureIndex >= textureLayers.length) {
+                currentTextureIndex = textureLayers.length - 1;
+            } else if (currentTextureIndex > targetDeleteTextureIndex) {
+                currentTextureIndex--;
+            }
+        }
+        
+        closeModal('deleteTextureModal');
+        targetDeleteTextureIndex = -1;
+        selectTextureLayer(currentTextureIndex);
+    }
+
+    function showModalAlert(msg, title = "提示") {
+        document.getElementById('alertTitle').innerText = title;
+        document.getElementById('alertMessage').innerText = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+    }
+
+    document.getElementById('textureInput').onchange = async (e) => {
+        if(e.target.files.length > 0) {
+            const file = e.target.files[0];
+            textureLayers[currentTextureIndex].blob = file;
+            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(file));
+            updateTexturePreview();
+        }
+        e.target.value = "";
+    };
+
+    document.getElementById('stickerInput').onchange = async (e) => {
+        if(e.target.files.length > 0) {
+            customStickerBlob = e.target.files[0];
+            customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+            updateStickerPreview();
+        }
+        e.target.value = "";
+    };
+
+    function openTextureModal() {
+        const canvas = document.getElementById('texturePreviewCanvas');
+        if (!canvas) return;
+        document.getElementById('textureModalImg').src = canvas.toDataURL("image/png");
+        document.getElementById('textureViewModal').style.display = 'flex';
+    }
+
+    async function updateTexturePreview() {
+        const canvas = document.getElementById('texturePreviewCanvas');
+        const box = document.getElementById('texturePreviewBox');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        if (currentFiles.length > 0) {
+            const firstImg = await loadImage(URL.createObjectURL(currentFiles[0]));
+            drawCover(ctx, firstImg, 0, 0, rect.width, rect.height);
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(0, 0, rect.width, rect.height);
+        }
+
+        let hasTexture = false;
+        textureLayers.forEach((layer, idx) => {
+            if (layer.img) {
+                hasTexture = true;
+                ctx.save();
+                const mode = (idx === currentTextureIndex) ? document.getElementById('textureBlendMode').value : layer.blendMode;
+                const alpha = (idx === currentTextureIndex) ? parseFloat(document.getElementById('textureAlpha').value) : layer.alpha;
+                ctx.globalCompositeOperation = mode;
+                ctx.globalAlpha = alpha;
+                drawCover(ctx, layer.img, 0, 0, rect.width, rect.height);
+                ctx.restore();
+            }
+        });
+
+        if (!hasTexture) {
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("暂无底纹", rect.width/2, rect.height/2);
+        }
+    }
+
+    async function updateStickerPreview() {
+        const canvas = document.getElementById('stickerPreviewCanvas');
+        const box = document.getElementById('stickerPreviewBox');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        
+        if (currentFiles.length > 0) {
+            const firstImg = await loadImage(URL.createObjectURL(currentFiles[0]));
+            drawCover(ctx, firstImg, 0, 0, rect.width, rect.height);
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(0, 0, rect.width, rect.height);
+        }
+
+        if(customStickerImg) {
+            const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
+            const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+            let targetW = rect.width * sizePct;
+            let targetH = targetW * (customStickerImg.height / customStickerImg.width);
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(customStickerImg, (rect.width - targetW)/2, (rect.height - targetH)/2, targetW, targetH);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.font = "14px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("暂无贴纸", rect.width/2, rect.height/2);
+        }
+    }
+
+    function updatePreview() {
+        const canvas = document.getElementById('previewCanvas');
+        const box = document.getElementById('previewBox');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        const text = document.getElementById('startNum').value || "1";
+        const fSize = parseInt(document.getElementById('fSize').value) || 150;
+        const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
+        const previewRatio = rect.width / 1000;
+        ctx.save();
+        drawComplexText(ctx, text, rect.width, rect.height, fSize * previewRatio, sWidth * previewRatio, true);
+        ctx.restore();
+    }
+
+    function drawComplexText(ctx, text, w, h, size, sWidth, isPreview = false) {
+        const font = document.getElementById('fontFamily').value;
+        ctx.font = `bold ${size}px ${font}`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+        const shadowOffset = document.getElementById('shEnable').checked ? (size * 0.1) : 0;
+        const safetyPadding = (size * 0.5) + (sWidth * 0.5) + shadowOffset + 20;
+        let cx, cy;
+        const pos = document.getElementById('pos').value;
+        if (isPreview) { cx = w / 2; cy = h / 2; } 
+        else {
+            if (pos === 'lt') { cx = safetyPadding; cy = safetyPadding; } 
+            else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
+            else if (pos === 'lb') { cx = safetyPadding; cy = h - safetyPadding; } 
+            else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
+            else if (pos === 'cb') { cx = w / 2; cy = h - safetyPadding; } 
+            else { cx = w/2; cy = h/2; }
+        }
+        if(document.getElementById('shEnable').checked) {
+            const rgb = hexToRgb(document.getElementById('shColor').value);
+            ctx.save();
+            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},${document.getElementById('shAlpha').value})`;
+            ctx.shadowBlur = size * 0.1; ctx.shadowOffsetX = size * 0.03; ctx.shadowOffsetY = size * 0.03;
+            if(sWidth > 0) { ctx.lineWidth = sWidth; ctx.strokeStyle = "black"; ctx.strokeText(text, cx, cy); }
+            ctx.fillStyle = "black"; ctx.fillText(text, cx, cy);
+            ctx.restore();
+        }
+        if(sWidth > 0) {
+            const rgb = hexToRgb(document.getElementById('sColor').value);
+            ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${document.getElementById('sAlpha').value})`;
+            ctx.lineWidth = sWidth;
+            ctx.strokeText(text, cx, cy);
+        }
+        const rgbF = hexToRgb(document.getElementById('fColor').value);
+        ctx.fillStyle = `rgba(${rgbF.r},${rgbF.g},${rgbF.b},${document.getElementById('fAlpha').value})`;
+        ctx.fillText(text, cx, cy);
+    }
+
+    function getSoldNumbers() {
+        if(!document.getElementById('soldEnable').checked) return new Set();
+        let raw = document.getElementById('soldNumbers').value;
+        raw = raw.replace(/[.、，。]/g, ',').replace(/[-—_~]/g, '-');
+        let parts = raw.split(',');
+        let sold = new Set();
+        parts.forEach(p => {
+            p = p.trim();
+            if(!p) return;
+            if(p.includes('-')) {
+                let [start, end] = p.split('-');
+                start = parseInt(start); end = parseInt(end);
+                if(!isNaN(start) && !isNaN(end)) {
+                    for(let i = Math.min(start, end); i <= Math.max(start, end); i++) sold.add(i);
+                }
+            } else {
+                let num = parseInt(p);
+                if(!isNaN(num)) sold.add(num);
+            }
+        });
+        return sold;
+    }
+
+    async function generate() {
+        if (currentFiles.length === 0) return;
+        saveCurrentLayerSettings(); 
+        const container = document.getElementById('resultContainer'); container.innerHTML = "";
+        generatedCanvases = []; 
+        const rows = parseInt(document.getElementById('rows').value), cols = parseInt(document.getElementById('cols').value);
+        const q = parseInt(document.getElementById('quality').value) / 100;
+        const rSelect = document.getElementById('ratioSelect').value;
+        const perPage = rows * cols;
+        const soldSet = getSoldNumbers();
+        const soldRawText = document.getElementById('soldNumbers').value.trim();
+        const isRemainMode = document.getElementById('soldRemainingMode').checked;
+
+        let imageGroups = [];
+
+        if (rSelect === 'auto') {
+            let currentRatioKey = null;
+            let currentGroup = null;
+            
+            for (let i = 0; i < currentFiles.length; i++) {
+                const file = currentFiles[i];
+                const img = await loadImage(URL.createObjectURL(file));
+                const ratioKey = (img.width / img.height).toFixed(2);
+                
+                if (ratioKey !== currentRatioKey) {
+                    currentRatioKey = ratioKey;
+                    currentGroup = { rW: img.width, rH: img.height, files: [] };
+                    imageGroups.push(currentGroup);
+                }
+                
+                currentGroup.files.push({ file: file, originalIndex: i });
+            }
+        } else {
+            let rW, rH;
+            if(rSelect === 'custom') { rW = document.getElementById('ratioW').value; rH = document.getElementById('ratioH').value; }
+            else { [rW, rH] = rSelect.split(':'); }
+            
+            let filesWithIndex = currentFiles.map((file, i) => ({ file: file, originalIndex: i }));
+            imageGroups = [{ rW: rW, rH: rH, files: filesWithIndex }];
+        }
+
+        for (const group of imageGroups) {
+            const groupFiles = group.files;
+            const itemW = 1000; 
+            const itemH = itemW * (group.rH / group.rW);
+
+            for (let i = 0; i < groupFiles.length; i += perPage) {
+                const canvas = document.createElement('canvas');
+                const cRows = Math.ceil(Math.min(groupFiles.length - i, perPage) / cols);
+                const cCols = Math.min(groupFiles.length - i, cols);
+                canvas.width = cCols * itemW; canvas.height = cRows * itemH;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = "white"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                
+                for (let j = 0; j < perPage && (i+j) < groupFiles.length; j++) {
+                    const fileObj = groupFiles[i+j];
+                    const img = await loadImage(URL.createObjectURL(fileObj.file));
+                    const x = (j % cols) * itemW, y = Math.floor(j / cols) * itemH;
+                    
+                    const currentNumber = parseInt(document.getElementById('startNum').value) + fileObj.originalIndex;
+                    
+                    drawCover(ctx, img, x, y, itemW, itemH);
+                    
+                    if (document.getElementById('textureEnable').checked) {
+                        textureLayers.forEach(layer => {
+                            if (layer.img && layer.scope === 'single') {
+                                ctx.save();
+                                ctx.globalCompositeOperation = layer.blendMode;
+                                ctx.globalAlpha = layer.alpha;
+                                drawCover(ctx, layer.img, x, y, itemW, itemH);
+                                ctx.restore();
+                            }
+                        });
+                    }
+                    
+                    let isSold = false;
+                    if(document.getElementById('soldEnable').checked && soldRawText !== "") {
+                        isSold = isRemainMode ? !soldSet.has(currentNumber) : soldSet.has(currentNumber);
+                    }
+
+                    if(isSold) {
+                        if(document.getElementById('stickerEnable').checked && customStickerImg) {
+                            const sizePct = parseInt(document.getElementById('stickerSize').value) / 100;
+                            const alpha = parseFloat(document.getElementById('stickerAlpha').value);
+                            ctx.save();
+                            ctx.globalAlpha = alpha;
+                            let targetW = itemW * sizePct;
+                            let targetH = targetW * (customStickerImg.height / customStickerImg.width);
+                            ctx.drawImage(customStickerImg, x + (itemW - targetW)/2, y + (itemH - targetH)/2, targetW, targetH);
+                            ctx.restore();
+                        } else {
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                            ctx.fillRect(x, y, itemW, itemH);
+                            const fontSize = itemW * 0.16; 
+                            ctx.font = `bold ${fontSize}px sans-serif`;
+                            ctx.textAlign = "center";
+                            ctx.textBaseline = "middle";
+                            ctx.lineJoin = "round";
+                            ctx.lineWidth = itemW * 0.02;
+                            ctx.strokeStyle = 'black';
+                            ctx.fillStyle = 'white';
+                            ctx.strokeText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                            ctx.fillText("SOLD", x + itemW/2, y + itemH/2 - fontSize*0.6);
+                            ctx.strokeText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                            ctx.fillText("OUT", x + itemW/2, y + itemH/2 + fontSize*0.6);
+                            ctx.restore();
+                        }
+                    }
+
+                    let drawNum = document.getElementById('numEnable').checked;
+                    if(isSold && !document.getElementById('soldNumEnable').checked) {
+                        drawNum = false;
+                    }
+
+                    if(drawNum) {
+                        ctx.save(); ctx.translate(x, y);
+                        const sWidth = document.getElementById('sEnable').checked ? parseInt(document.getElementById('sWidth').value) : 0;
+                        drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
+                        ctx.restore();
+                    }
+                }
+
+                if (document.getElementById('textureEnable').checked) {
+                    textureLayers.forEach(layer => {
+                        if (layer.img && layer.scope === 'global') {
+                            ctx.save();
+                            ctx.globalCompositeOperation = layer.blendMode;
+                            ctx.globalAlpha = layer.alpha;
+                            drawCover(ctx, layer.img, 0, 0, canvas.width, canvas.height);
+                            ctx.restore();
+                        }
+                    });
+                }
+
+                generatedCanvases.push(canvas);
+                const resImg = document.createElement('img'); resImg.src = canvas.toDataURL("image/jpeg", q); container.appendChild(resImg);
+            }
+        }
+        document.getElementById('downloadGroup').style.display = 'block';
+    }
+
+    async function downloadAllSingle() {
+        const q = parseInt(document.getElementById('quality').value) / 100;
+        const total = generatedCanvases.length;
+        for (let i = 0; i < total; i++) {
+            const link = document.createElement('a');
+            link.download = `Kaki_Collage_${i + 1}.jpg`;
+            link.href = generatedCanvases[i].toDataURL("image/jpeg", q);
+            link.click();
+            if (i < total - 1) {
+                await new Promise(resolve => setTimeout(resolve, 2500));
+            }
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        showModalAlert(`当前 ${total} 张已全部下载完成`);
+    }
+
+    async function downloadZip() {
+        const zip = new JSZip();
+        const q = parseInt(document.getElementById('quality').value) / 100;
+        generatedCanvases.forEach((canvas, i) => {
+            const dataUrl = canvas.toDataURL("image/jpeg", q);
+            const base64Data = dataUrl.split(',')[1];
+            zip.file(`Kaki_Collage_${i + 1}.jpg`, base64Data, {base64: true});
+        });
+        const content = await zip.generateAsync({type:"blob"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = "Kaki_Collages.zip";
+        link.click();
+    }
+
+    function drawCover(ctx, img, x, y, w, h) {
+        const iR = img.width/img.height, tR = w/h;
+        let sx, sy, sw, sh;
+        if(iR > tR) { sh = img.height; sw = sh*tR; sx = (img.width-sw)/2; sy = 0; }
+        else { sw = img.width; sh = sw/tR; sx = 0; sy = (img.height-sh)/2; }
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    }
+
+    function hexToRgb(hex) { const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16); return {r, g, b}; }
+    function loadImage(url) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = url; }); }
+    
+    function handleThumbClick(i, el) { 
+        if(isSwapMode){ 
+            if(swapSelection.includes(i))return; 
+            swapSelection.push(i); 
+            el.classList.add('selected'); 
+            if(swapSelection.length===2){ 
+                document.getElementById('swapText').innerText=`交换第 ${swapSelection[0]+1} 张和第 ${swapSelection[1]+1} 张？`; 
+                document.getElementById('swapModal').style.display='flex'; 
+            } 
+        }else{ 
+            currentPreviewIndex = i;
+            document.getElementById('modalImg').src=URL.createObjectURL(currentFiles[i]); 
+            document.getElementById('viewModal').style.display='flex'; 
+        }
+    }
+
+    function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
+    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
+    function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
+    
+    // ==========================================
+    // 全新独立存档管理模块核心逻辑（防卡死、防报错）
+    // ==========================================
+    function openSaveArchiveModal() {
+        document.getElementById('archiveNameInput').value = "";
+        document.getElementById('saveArchiveModal').style.display = 'flex';
+    }
+
+    function calculateArchiveSize(images, settings) {
+        let totalBytes = 0;
+        if (images && images.length > 0) {
+            images.forEach(f => { if(f && f.size) totalBytes += f.size; });
+        }
+        if (settings) {
+            totalBytes += JSON.stringify(settings).length;
+            if (settings.textureLayers) {
+                settings.textureLayers.forEach(l => { if(l.blob && l.blob.size) totalBytes += l.blob.size; });
+            }
+            if (settings.customStickerBlob && settings.customStickerBlob.size) {
+                totalBytes += settings.customStickerBlob.size;
+            }
+        }
+        if (totalBytes < 1024) return totalBytes + " B";
+        if (totalBytes < 1024 * 1024) return (totalBytes / 1024).toFixed(1) + " KB";
+        return (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
+    function confirmSaveArchive() {
+        const name = document.getElementById('archiveNameInput').value.trim() || `存档 ${archiveList.length + 1}`;
+        const saveImages = document.getElementById('saveOptImages').checked;
+        const saveSettings = document.getElementById('saveOptSettings').checked;
+
+        if (!saveImages && !saveSettings) {
+            showModalAlert("请至少勾选保存图片或保存设置中的一项");
+            return;
+        }
+
+        saveCurrentLayerSettings();
+
+        let imagesData = null;
+        if (saveImages) {
+            imagesData = currentFiles.slice();
+        }
+
+        let settingsData = null;
+        if (saveSettings) {
+            // 剥离 DOM 节点，只保存干净的原始值和二进制流，确保100%成功存档
+            settingsData = {
+                theme: document.getElementById('themeSelector').value,
+                ratioSelect: document.getElementById('ratioSelect').value,
+                ratioW: document.getElementById('ratioW').value,
+                ratioH: document.getElementById('ratioH').value,
+                rows: document.getElementById('rows').value,
+                cols: document.getElementById('cols').value,
+                quality: document.getElementById('quality').value,
+                numEnable: document.getElementById('numEnable').checked,
+                startNum: document.getElementById('startNum').value,
+                fontFamily: document.getElementById('fontFamily').value,
+                fAlpha: document.getElementById('fAlpha').value,
+                fColor: document.getElementById('fColor').value,
+                sEnable: document.getElementById('sEnable').checked,
+                sWidth: document.getElementById('sWidth').value,
+                sAlpha: document.getElementById('sAlpha').value,
+                sColor: document.getElementById('sColor').value,
+                shEnable: document.getElementById('shEnable').checked,
+                shAlpha: document.getElementById('shAlpha').value,
+                shColor: document.getElementById('shColor').value,
+                pos: document.getElementById('pos').value,
+                fSize: document.getElementById('fSize').value,
+                textureEnable: document.getElementById('textureEnable').checked,
+                textureLayers: textureLayers.map(l => ({
+                    blob: l.blob || null,
+                    scope: l.scope,
+                    blendMode: l.blendMode,
+                    alpha: l.alpha
+                })),
+                soldEnable: document.getElementById('soldEnable').checked,
+                soldRemainingMode: document.getElementById('soldRemainingMode').checked,
+                soldNumbers: document.getElementById('soldNumbers').value,
+                soldNumEnable: document.getElementById('soldNumEnable').checked,
+                stickerEnable: document.getElementById('stickerEnable').checked,
+                stickerSize: document.getElementById('stickerSize').value,
+                stickerAlpha: document.getElementById('stickerAlpha').value,
+                customStickerBlob: customStickerBlob || null
+            };
+        }
+
+        const newArchive = {
+            id: Date.now(),
+            name: name,
+            timestamp: new Date().toLocaleDateString(),
+            sizeBytes: calculateArchiveSize(imagesData, settingsData),
+            hasImages: saveImages,
+            hasSettings: saveSettings,
+            images: imagesData,
+            settings: settingsData
+        };
+
+        archiveList.unshift(newArchive);
+        saveArchiveListToDB();
+        closeModal('saveArchiveModal');
+    }
+
+    function saveArchiveListToDB() {
+        const tx = db.transaction("store", "readwrite");
+        tx.objectStore("store").put(archiveList, "archiveList");
+        tx.oncomplete = renderArchiveList;
+    }
+
+    function renderArchiveList() {
+        const container = document.getElementById('archiveListContainer');
+        if (!container) return;
+        container.innerHTML = "";
+        
+        if (archiveList.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color: var(--section-header); font-size: 0.8rem; padding: 20px 0;">暂无存档</div>';
+            document.getElementById('restoreBtn').disabled = true;
+            document.getElementById('restoreBtn').style.opacity = '0.5';
+            selectedArchiveId = null;
+            return;
+        }
+
+        archiveList.forEach(arch => {
+            const item = document.createElement('div');
+            item.className = `archive-item ${arch.id === selectedArchiveId ? 'selected' : ''}`;
+            item.onclick = () => {
+                selectedArchiveId = arch.id;
+                renderArchiveList();
+            };
+            
+            const info = document.createElement('div');
+            info.className = 'archive-info';
+            
+            const title = document.createElement('div');
+            title.className = 'archive-title';
+            title.innerText = arch.name;
+            
+            const meta = document.createElement('div');
+            meta.className = 'archive-meta';
+            let tags = [];
+            if (arch.hasImages) tags.push("图片");
+            if (arch.hasSettings) tags.push("设置");
+            meta.innerText = `${arch.timestamp} | ${tags.join('+')} | ${arch.sizeBytes}`;
+            
+            info.appendChild(title);
+            info.appendChild(meta);
+            
+            const delBtn = document.createElement('div');
+            delBtn.className = 'archive-del-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = "删除当前存档";
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                requestDeleteArchive(arch.id);
+            };
+            
+            item.appendChild(info);
+            item.appendChild(delBtn);
+            container.appendChild(item);
+        });
+
+        const restoreBtn = document.getElementById('restoreBtn');
+        if (selectedArchiveId && archiveList.some(a => a.id === selectedArchiveId)) {
+            restoreBtn.disabled = false;
+            restoreBtn.style.opacity = '1';
+        } else {
+            restoreBtn.disabled = true;
+            restoreBtn.style.opacity = '0.5';
+        }
+    }
+
+    function requestDeleteArchive(id) {
+        targetDeleteArchiveId = id;
+        document.getElementById('deleteArchiveModal').style.display = 'flex';
+    }
+
+    function confirmDeleteArchive() {
+        if (!targetDeleteArchiveId) return;
+        archiveList = archiveList.filter(a => a.id !== targetDeleteArchiveId);
+        if (selectedArchiveId === targetDeleteArchiveId) selectedArchiveId = null;
+        targetDeleteArchiveId = null;
+        saveArchiveListToDB();
+        closeModal('deleteArchiveModal');
+    }
+
+    function requestClearAllArchives() {
+        if (archiveList.length === 0) return;
+        document.getElementById('clearAllArchivesModal').style.display = 'flex';
+    }
+
+    function confirmClearAllArchives() {
+        archiveList = [];
+        selectedArchiveId = null;
+        saveArchiveListToDB();
+        closeModal('clearAllArchivesModal');
+    }
+
+    async function restoreSelectedArchive() {
+        const arch = archiveList.find(a => a.id === selectedArchiveId);
+        if (!arch) return;
+        
+        if (arch.hasImages && arch.images) {
+            currentFiles = arch.images.slice();
+            saveToDB(); 
+        }
+        
+        if (arch.hasSettings && arch.settings) {
+            const s = arch.settings;
+            if(s.theme) { document.getElementById('themeSelector').value = s.theme; changeTheme(); }
+            if(s.ratioSelect) { document.getElementById('ratioSelect').value = s.ratioSelect; toggleRatioInput(); }
+            if(s.ratioW) document.getElementById('ratioW').value = s.ratioW;
+            if(s.ratioH) document.getElementById('ratioH').value = s.ratioH;
+            if(s.rows) document.getElementById('rows').value = s.rows;
+            if(s.cols) document.getElementById('cols').value = s.cols;
+            if(s.quality) document.getElementById('quality').value = s.quality;
+            
+            if(s.numEnable !== undefined) { document.getElementById('numEnable').checked = s.numEnable; toggleNumSection(); }
+            if(s.startNum) document.getElementById('startNum').value = s.startNum;
+            if(s.fontFamily) document.getElementById('fontFamily').value = s.fontFamily;
+            if(s.fAlpha) document.getElementById('fAlpha').value = s.fAlpha;
+            if(s.fColor) document.getElementById('fColor').value = s.fColor;
+            
+            if(s.sEnable !== undefined) { document.getElementById('sEnable').checked = s.sEnable; toggleStrokeSection(); }
+            if(s.sWidth) document.getElementById('sWidth').value = s.sWidth;
+            if(s.sAlpha) document.getElementById('sAlpha').value = s.sAlpha;
+            if(s.sColor) document.getElementById('sColor').value = s.sColor;
+            
+            if(s.shEnable !== undefined) { document.getElementById('shEnable').checked = s.shEnable; toggleShadowSection(); }
+            if(s.shAlpha) document.getElementById('shAlpha').value = s.shAlpha;
+            if(s.shColor) document.getElementById('shColor').value = s.shColor;
+            
+            if(s.pos) document.getElementById('pos').value = s.pos;
+            if(s.fSize) document.getElementById('fSize').value = s.fSize;
+            
+            if(s.textureEnable !== undefined) { document.getElementById('textureEnable').checked = s.textureEnable; toggleTextureSection(); }
+            if(s.textureLayers && Array.isArray(s.textureLayers)) {
+                textureLayers = [];
+                for (let i = 0; i < s.textureLayers.length; i++) {
+                    const lData = s.textureLayers[i];
+                    let imgObj = null;
+                    if (lData.blob) {
+                        imgObj = await loadImage(URL.createObjectURL(lData.blob));
+                    }
+                    textureLayers.push({
+                        blob: lData.blob || null,
+                        img: imgObj,
+                        scope: lData.scope || 'single',
+                        blendMode: lData.blendMode || 'source-over',
+                        alpha: lData.alpha !== undefined ? lData.alpha : 0.5
+                    });
+                }
+                currentTextureIndex = 0;
+                renderTextureTabs();
+                selectTextureLayer(0);
+            }
+            
+            if(s.soldEnable !== undefined) { document.getElementById('soldEnable').checked = s.soldEnable; toggleSoldSection(); }
+            if(s.soldRemainingMode !== undefined) { document.getElementById('soldRemainingMode').checked = s.soldRemainingMode; toggleRemainHint(); }
+            if(s.soldNumbers !== undefined) document.getElementById('soldNumbers').value = s.soldNumbers;
+            if(s.soldNumEnable !== undefined) document.getElementById('soldNumEnable').checked = s.soldNumEnable;
+            
+            if(s.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = s.stickerEnable; toggleStickerSection(); }
+            if(s.stickerSize) document.getElementById('stickerSize').value = s.stickerSize;
+            if(s.stickerAlpha) document.getElementById('stickerAlpha').value = s.stickerAlpha;
+            if(s.customStickerBlob) {
+                customStickerBlob = s.customStickerBlob;
+                customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+            } else {
+                customStickerBlob = null;
+                customStickerImg = null;
+            }
+            updateStickerPreview();
+            updateTexturePreview();
+            updatePreview();
+        }
+        
+        showModalAlert(`已成功恢复存档 "${arch.name}"`);
+    }
+
+    function initToggles() {
+        toggleNumSection();
+        toggleStrokeSection();
+        toggleShadowSection();
+        toggleTextureSection();
+        toggleSoldSection();
+        toggleStickerSection();
+        toggleRemainHint();
+        renderTextureTabs(); 
+    }
+    initToggles();
+    
+    setTimeout(updatePreview, 100);
+</script>
+</body>
+</html>        #fileInput, #stickerInput, #textureInput { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
         .file-label { background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: inline-block; transition: background 0.3s, color 0.3s; }
         .preview-pool { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 10px; margin-top: 10px; max-height: 200px; overflow: auto; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 12px; border: 1px dashed var(--accent-pink); transition: border 0.3s; }
         
