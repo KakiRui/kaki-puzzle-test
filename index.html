@@ -73,6 +73,7 @@
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
 
+        /* 底纹图层标签样式 */
         .texture-tabs-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin: 2px 0 4px 0; width: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
         .texture-tabs-container::-webkit-scrollbar { display: none; }
         .texture-tab { position: relative; padding: 5px 24px 5px 12px; border-radius: 14px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--section-bg); color: var(--text-brown); border: 1px solid var(--accent-blue); transition: all 0.2s; display: inline-flex; align-items: center; flex-shrink: 0; }
@@ -82,16 +83,18 @@
         .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
         .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
 
-        /* 新增：硬核存档卡片与列表样式（100%主题配色融合） */
-        .save-card { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 12px; padding: 12px 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
-        .save-card.selected { border: 2px solid var(--selected-border); background: var(--section-bg); }
-        .save-card-info { text-align: left; flex: 1; min-width: 0; }
-        .save-card-title { font-weight: bold; font-size: 0.9rem; color: var(--text-brown); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .save-card-meta { font-size: 0.7rem; color: var(--section-header); display: flex; gap: 8px; align-items: center; }
-        .save-card-size { font-size: 0.65rem; color: var(--text-brown); opacity: 0.8; font-weight: 500; }
-        .save-card-del { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-brown); opacity: 0.5; transition: all 0.2s; flex-shrink: 0; margin-left: 10px; }
-        .save-card-del:hover { opacity: 1; background: rgba(0,0,0,0.1); color: #e08283; }
-        .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-brown); cursor: pointer; margin-bottom: 8px; justify-content: flex-start; }
+        /* 新增存档模块独立样式 */
+        .archive-panel { background: var(--panel-bg); border: 1px solid var(--accent-pink); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(51, 51, 51, 0.1); margin-bottom: 20px; transition: border 0.3s, background 0.3s; width: 100%; box-sizing: border-box; }
+        .archive-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+        .archive-item { background: var(--section-bg); border: 1px solid var(--accent-blue); border-radius: 12px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; }
+        .archive-item.selected { border: 2px solid var(--selected-border); background: rgba(255, 255, 255, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .archive-info { display: flex; flex-direction: column; gap: 4px; max-width: 80%; }
+        .archive-name { font-weight: bold; font-size: 0.95rem; color: var(--text-brown); word-break: break-all; }
+        .archive-meta { font-size: 0.7rem; color: var(--section-header); display: flex; gap: 8px; align-items: center; }
+        .archive-del-btn { width: 24px; height: 24px; border-radius: 50%; background: var(--btn-del-bg); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+        .archive-del-btn:hover { opacity: 0.8; }
+        .clear-all-btn { background: transparent; border: 1px solid var(--btn-del-bg); color: var(--text-brown); font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .clear-all-btn:hover { background: var(--btn-del-bg); color: white; }
     </style>
 </head>
 <body>
@@ -257,17 +260,25 @@
                 <button class="btn-main btn-swap" id="zipDownloadBtn" onclick="downloadZip()">ZIP 打包下载</button>
             </div>
         </div>
+    </div>
 
-        <div class="section-block" style="margin-top: 20px; margin-bottom: 0;">
-            <div class="section-header"><span>存档与恢复系统</span></div>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="btn-main btn-swap" style="margin-bottom: 0; flex: 1;" onclick="openCreateSaveModal()">新建存档</button>
-                <button class="btn-main" style="margin-bottom: 0; flex: 1; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown));" onclick="restoreSelectedSave()">恢复存档</button>
-            </div>
-            <div id="saveListContainer" style="max-height: 260px; overflow-y: auto; margin-bottom: 10px;"></div>
-            <button class="btn-main" style="background: var(--btn-del-bg); color: white; margin-bottom: 0; padding: 10px; font-size: 0.85rem;" onclick="requestClearAllSaves()">一键清空所有存档数据</button>
+    <div class="archive-panel">
+        <div class="section-header" style="margin-bottom: 5px;">
+            <span style="font-size: 1.1rem; color: var(--text-brown);">存档管理系统</span>
+            <button class="clear-all-btn" onclick="requestClearAllArchives()">一键清空</button>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--section-header); margin: 0 0 15px 0;">支持持久化保存当前导入图片、自定义编号顺序与全部参数设置，防止卡退刷新。</p>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-main btn-swap" style="margin-bottom: 0; flex: 1;" onclick="openCreateArchiveModal()">新增存档</button>
+            <button class="btn-main" style="margin-bottom: 0; flex: 1; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown));" id="restoreBtn" onclick="restoreSelectedArchive()">恢复该存档</button>
+        </div>
+
+        <div class="archive-list" id="archiveListContainer">
+            <div style="text-align: center; color: var(--section-header); font-size: 0.8rem; padding: 20px 0;">暂无任何存档记录</div>
         </div>
     </div>
+
     <div id="resultContainer"></div>
 </div>
 
@@ -304,38 +315,42 @@
     <div class="modal-box">
         <h3 style="margin-top:0; color: var(--text-brown);">删除底纹</h3>
         <p id="deleteTextureText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
-        <div class="btn-group">
-            <button class="btn-main btn-flex-3" style="background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="closeModal('deleteTextureModal')">取消</button>
-            <button class="btn-main btn-del btn-flex-1" style="margin-bottom:0;" onclick="confirmDeleteTexture()">删除</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main btn-swap" onclick="confirmDeleteTexture()">确定</button>
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('deleteTextureModal')">取消</button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="createSaveModal">
-    <div class="modal-box">
-        <h3 style="margin-top:0; color: var(--text-brown);">新建存档</h3>
-        <div style="text-align: left; margin: 15px 0;">
-            <label style="margin-bottom: 6px;">存档名称</label>
-            <input type="text" id="saveNameInput" placeholder="请输入存档名称，如：2026.7">
-            <div style="margin-top: 12px;">
-                <label class="checkbox-label"><input type="checkbox" id="saveOptImages" checked style="accent-color: var(--accent-pink);"> 保存当前导入图片</label>
-                <label class="checkbox-label"><input type="checkbox" id="saveOptSettings" checked style="accent-color: var(--accent-pink);"> 保存当前工具参数与贴纸设置</label>
-            </div>
+<div class="modal-overlay" id="createArchiveModal">
+    <div class="modal-box" style="text-align: left;">
+        <h3 style="margin-top:0; text-align: center; color: var(--text-brown);">保存新存档</h3>
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; margin-bottom: 4px;">存档命名</label>
+            <input type="text" id="archiveNameInput" placeholder="如: 2026.7 或 默认方案">
         </div>
-        <div class="btn-group">
-            <button class="btn-main btn-flex-3" style="background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="closeModal('createSaveModal')">取消</button>
-            <button class="btn-main btn-swap btn-flex-3" style="margin-bottom:0;" onclick="executeCreateSave()">确认保存</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; font-size: 0.85rem; color: var(--text-brown);">
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                <input type="checkbox" id="saveImgCheck" checked style="width: auto; margin: 0; accent-color: var(--accent-pink);"> 保存当前图片 (含自定编号顺序/底纹/贴纸)
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                <input type="checkbox" id="saveSetCheck" checked style="width: auto; margin: 0; accent-color: var(--accent-pink);"> 保存当前参数设置 (含主题/比例/描边等)
+            </label>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main btn-swap" onclick="confirmCreateArchive()">保存</button>
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('createArchiveModal')">取消</button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="confirmDeleteSaveModal">
+<div class="modal-overlay" id="archiveConfirmModal">
     <div class="modal-box">
-        <h3 style="margin-top:0; color: var(--text-brown);">删除存档</h3>
-        <p id="confirmDeleteSaveText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;">是否要删除当前存档？</p>
-        <div class="btn-group">
-            <button class="btn-main btn-flex-3" style="background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); margin-bottom:0;" onclick="closeModal('confirmDeleteSaveModal')">取消</button>
-            <button class="btn-main btn-del btn-flex-1" style="margin-bottom:0;" onclick="confirmDeleteSaveAction()">删除</button>
+        <h3 id="archiveConfirmTitle" style="margin-top:0; color: var(--text-brown);">删除提示</h3>
+        <p id="archiveConfirmText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main btn-swap" id="archiveConfirmBtn">确定</button>
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('archiveConfirmModal')">取消</button>
         </div>
     </div>
 </div>
@@ -344,16 +359,15 @@
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
+    let customStickerBlob = null; // 贴纸Blob持久化缓存
     
-    let textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
+    let textureLayers = [{ img: null, blob: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
     let currentTextureIndex = 0;
     let targetDeleteTextureIndex = -1;
-    
-    // 存档系统全局控制变量
-    let saveList = [];
-    let selectedSaveId = null;
-    let pendingDeleteSaveId = null;
-    let isClearAllAction = false;
+
+    // 存档数据数组与当前选中项索引
+    let archiveList = [];
+    let selectedArchiveIndex = -1;
 
     const themes = {
         gray: {
@@ -430,313 +444,34 @@
         root.style.setProperty('--modal-overlay-bg', t.modalOverlayBg);
     }
 
-    // 升级数据库结构，支持原有的 imageList 及独立的 savesObjectStore
-    const request = indexedDB.open("KakiDB", 2);
-    request.onupgradeneeded = e => { 
-        const resDb = e.target.result;
-        if(!resDb.objectStoreNames.contains("store")) resDb.createObjectStore("store");
-        if(!resDb.objectStoreNames.contains("saves")) resDb.createObjectStore("saves", { keyPath: "id" });
-    };
-    request.onsuccess = e => { 
-        db = e.target.result; 
-        loadFromDB(); 
-        loadSavesFromDB();
-        changeTheme(); 
-    }; 
+    const request = indexedDB.open("KakiDB", 1);
+    request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
+    request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
 
-    function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
-    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); }; }
-
-    // --- 核心硬核功能：存档与恢复系统 ---
-    function loadSavesFromDB() {
-        const tx = db.transaction("saves", "readonly");
-        const store = tx.objectStore("saves");
-        store.getAll().onsuccess = e => {
-            saveList = e.target.result || [];
-            renderSaveList();
+    function saveToDB() { 
+        const tx = db.transaction("store", "readwrite"); 
+        tx.objectStore("store").put(currentFiles, "imageList"); 
+        tx.oncomplete = renderPool; 
+    }
+    function loadFromDB() { 
+        const tx = db.transaction("store", "readonly"); 
+        const store = tx.objectStore("store");
+        store.get("imageList").onsuccess = e => { 
+            if(e.target.result) currentFiles = e.target.result; 
+            renderPool(); updatePreview(); 
+            if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
+            if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
+        }; 
+        store.get("archiveList").onsuccess = e => {
+            if(e.target.result) archiveList = e.target.result;
+            renderArchiveList();
         };
     }
-
-    function renderSaveList() {
-        const container = document.getElementById('saveListContainer');
-        if (!container) return;
-        container.innerHTML = "";
-        
-        if (saveList.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: var(--section-header); font-size: 0.8rem; padding: 20px 0;">暂无任何存档记录，点击上方“新建存档”保存哦</div>`;
-            return;
-        }
-
-        saveList.forEach(save => {
-            const card = document.createElement('div');
-            card.className = `save-card ${save.id === selectedSaveId ? 'selected' : ''}`;
-            card.onclick = () => { selectedSaveId = save.id; renderSaveList(); };
-            
-            let tagText = "";
-            if (save.hasImages && save.hasSettings) tagText = "[图+设]";
-            else if (save.hasImages) tagText = "[仅图]";
-            else if (save.hasSettings) tagText = "[仅设]";
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = "save-card-info";
-            infoDiv.innerHTML = `
-                <div class="save-card-title">${save.name} ${tagText}</div>
-                <div class="save-card-meta">
-                    <span>${save.dateStr}</span>
-                    <span class="save-card-size">大小: ${formatBytes(save.sizeBytes)}</span>
-                </div>
-            `;
-            card.appendChild(infoDiv);
-
-            const delBtn = document.createElement('div');
-            delBtn.className = "save-card-del";
-            delBtn.innerHTML = "&times;";
-            delBtn.title = "删除当前存档";
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                requestDeleteSave(save.id);
-            };
-            card.appendChild(delBtn);
-
-            container.appendChild(card);
-        });
+    function saveArchivesToDB() {
+        const tx = db.transaction("store", "readwrite");
+        tx.objectStore("store").put(archiveList, "archiveList");
+        tx.oncomplete = renderArchiveList;
     }
-
-    function openCreateSaveModal() {
-        document.getElementById('saveNameInput').value = "";
-        document.getElementById('saveOptImages').checked = true;
-        document.getElementById('saveOptSettings').checked = true;
-        document.getElementById('createSaveModal').style.display = 'flex';
-    }
-
-    async function executeCreateSave() {
-        const name = document.getElementById('saveNameInput').value.trim() || `未命名存档_${new Date().toLocaleDateString()}`;
-        const optImages = document.getElementById('saveOptImages').checked;
-        const optSettings = document.getElementById('saveOptSettings').checked;
-
-        if (!optImages && !optSettings) {
-            showModalAlert("请至少勾选一项保存内容（保存图片或保存参数设置）哦");
-            return;
-        }
-
-        saveCurrentLayerSettings();
-        let saveObj = {
-            id: Date.now().toString(),
-            name: name,
-            dateStr: new Date().toLocaleString('zh-CN', {month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'}),
-            hasImages: optImages,
-            hasSettings: optSettings,
-            imagesData: null,
-            settingsData: null,
-            sizeBytes: 0
-        };
-
-        if (optImages && currentFiles.length > 0) {
-            saveObj.imagesData = await Promise.all(currentFiles.map(file => blobToBase64(file)));
-        }
-
-        if (optSettings) {
-            let layersData = [];
-            for (let layer of textureLayers) {
-                layersData.push({
-                    imgBase64: layer.img ? await canvasImageToBase64(layer.img) : null,
-                    scope: layer.scope,
-                    blendMode: layer.blendMode,
-                    alpha: layer.alpha
-                });
-            }
-            saveObj.settingsData = {
-                theme: document.getElementById('themeSelector').value,
-                ratioSelect: document.getElementById('ratioSelect').value,
-                ratioW: document.getElementById('ratioW').value,
-                ratioH: document.getElementById('ratioH').value,
-                rows: document.getElementById('rows').value,
-                cols: document.getElementById('cols').value,
-                quality: document.getElementById('quality').value,
-                numEnable: document.getElementById('numEnable').checked,
-                startNum: document.getElementById('startNum').value,
-                fontFamily: document.getElementById('fontFamily').value,
-                fAlpha: document.getElementById('fAlpha').value,
-                fColor: document.getElementById('fColor').value,
-                sEnable: document.getElementById('sEnable').checked,
-                sWidth: document.getElementById('sWidth').value,
-                sAlpha: document.getElementById('sAlpha').value,
-                sColor: document.getElementById('sColor').value,
-                shEnable: document.getElementById('shEnable').checked,
-                shAlpha: document.getElementById('shAlpha').value,
-                shColor: document.getElementById('shColor').value,
-                pos: document.getElementById('pos').value,
-                fSize: document.getElementById('fSize').value,
-                textureEnable: document.getElementById('textureEnable').checked,
-                textureLayers: layersData,
-                currentTextureIndex: currentTextureIndex,
-                soldEnable: document.getElementById('soldEnable').checked,
-                soldRemainingMode: document.getElementById('soldRemainingMode').checked,
-                soldNumbers: document.getElementById('soldNumbers').value,
-                soldNumEnable: document.getElementById('soldNumEnable').checked,
-                stickerEnable: document.getElementById('stickerEnable').checked,
-                stickerImgBase64: customStickerImg ? await canvasImageToBase64(customStickerImg) : null,
-                stickerSize: document.getElementById('stickerSize').value,
-                stickerAlpha: document.getElementById('stickerAlpha').value
-            };
-        }
-
-        // 精准估算真实空间占用
-        const jsonStr = JSON.stringify(saveObj);
-        saveObj.sizeBytes = new Blob([jsonStr]).size;
-
-        const tx = db.transaction("saves", "readwrite");
-        tx.objectStore("saves").put(saveObj);
-        tx.oncomplete = () => {
-            closeModal('createSaveModal');
-            loadSavesFromDB();
-            showModalAlert(`存档“${name}”已成功持久化保存！`);
-        };
-    }
-
-    async function restoreSelectedSave() {
-        if (!selectedSaveId) {
-            showModalAlert("请在下方列表中点击勾选一个你想要恢复的存档哦");
-            return;
-        }
-        const save = saveList.find(s => s.id === selectedSaveId);
-        if (!save) return;
-
-        if (save.hasImages && save.imagesData) {
-            currentFiles = await Promise.all(save.imagesData.map(b64 => base64ToBlob(b64)));
-            saveToDB();
-        }
-
-        if (save.hasSettings && save.settingsData) {
-            const s = save.settingsData;
-            document.getElementById('themeSelector').value = s.theme || 'gray';
-            changeTheme();
-
-            document.getElementById('ratioSelect').value = s.ratioSelect || 'auto';
-            document.getElementById('ratioW').value = s.ratioW || 1;
-            document.getElementById('ratioH').value = s.ratioH || 1;
-            toggleRatioInput();
-
-            document.getElementById('rows').value = s.rows || 3;
-            document.getElementById('cols').value = s.cols || 3;
-            document.getElementById('quality').value = s.quality || 100;
-
-            document.getElementById('numEnable').checked = s.numEnable !== false;
-            document.getElementById('startNum').value = s.startNum || 1;
-            document.getElementById('fontFamily').value = s.fontFamily || 'sans-serif';
-            document.getElementById('fAlpha').value = s.fAlpha || 1;
-            document.getElementById('fColor').value = s.fColor || '#FFFFFF';
-            document.getElementById('sEnable').checked = s.sEnable !== false;
-            document.getElementById('sWidth').value = s.sWidth || 15;
-            document.getElementById('sAlpha').value = s.sAlpha || 1;
-            document.getElementById('sColor').value = s.sColor || '#000000';
-            document.getElementById('shEnable').checked = !!s.shEnable;
-            document.getElementById('shAlpha').value = s.shAlpha || 0.5;
-            document.getElementById('shColor').value = s.shColor || '#000000';
-            document.getElementById('pos').value = s.pos || 'rb';
-            document.getElementById('fSize').value = s.fSize || 150;
-            toggleNumSection();
-            toggleStrokeSection();
-            toggleShadowSection();
-
-            document.getElementById('textureEnable').checked = !!s.textureEnable;
-            toggleTextureSection();
-            if (s.textureLayers && s.textureLayers.length > 0) {
-                textureLayers = [];
-                for (let l of s.textureLayers) {
-                    textureLayers.push({
-                        img: l.imgBase64 ? await loadImage(l.imgBase64) : null,
-                        scope: l.scope || 'single',
-                        blendMode: l.blendMode || 'source-over',
-                        alpha: l.alpha !== undefined ? l.alpha : 0.5
-                    });
-                }
-                currentTextureIndex = Math.min(s.currentTextureIndex || 0, textureLayers.length - 1);
-                selectTextureLayer(currentTextureIndex);
-            }
-
-            document.getElementById('soldEnable').checked = !!s.soldEnable;
-            document.getElementById('soldRemainingMode').checked = !!s.soldRemainingMode;
-            document.getElementById('soldNumbers').value = s.soldNumbers || "";
-            document.getElementById('soldNumEnable').checked = s.soldNumEnable !== false;
-            toggleSoldSection();
-            toggleRemainHint();
-
-            document.getElementById('stickerEnable').checked = !!s.stickerEnable;
-            customStickerImg = s.stickerImgBase64 ? await loadImage(s.stickerImgBase64) : null;
-            document.getElementById('stickerSize').value = s.stickerSize || 75;
-            document.getElementById('stickerAlpha').value = s.stickerAlpha || 1;
-            toggleStickerSection();
-            updateStickerPreview();
-        }
-
-        updatePreview();
-        if (document.getElementById('textureEnable').checked) updateTexturePreview();
-        showModalAlert(`已成功为你恢复存档“${save.name}”！`);
-    }
-
-    function requestDeleteSave(id) {
-        pendingDeleteSaveId = id;
-        isClearAllAction = false;
-        document.getElementById('confirmDeleteSaveText').innerText = "是否要删除当前存档？";
-        document.getElementById('confirmDeleteSaveModal').style.display = 'flex';
-    }
-
-    function requestClearAllSaves() {
-        if (saveList.length === 0) {
-            showModalAlert("当前没有已存有的存档可以清空哦");
-            return;
-        }
-        isClearAllAction = true;
-        document.getElementById('confirmDeleteSaveText').innerText = "警告：是否彻底一键清空所有的存档数据？此操作不可逆！";
-        document.getElementById('confirmDeleteSaveModal').style.display = 'flex';
-    }
-
-    function confirmDeleteSaveAction() {
-        const tx = db.transaction("saves", "readwrite");
-        const store = tx.objectStore("saves");
-        if (isClearAllAction) {
-            store.clear();
-            selectedSaveId = null;
-        } else if (pendingDeleteSaveId) {
-            store.delete(pendingDeleteSaveId);
-            if (selectedSaveId === pendingDeleteSaveId) selectedSaveId = null;
-        }
-        tx.oncomplete = () => {
-            closeModal('confirmDeleteSaveModal');
-            loadSavesFromDB();
-        };
-    }
-
-    function blobToBase64(blob) {
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-        });
-    }
-
-    async function base64ToBlob(base64) {
-        const res = await fetch(base64);
-        return await res.blob();
-    }
-
-    function canvasImageToBase64(img) {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width; canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        return canvas.toDataURL("image/png");
-    }
-
-    function formatBytes(bytes) {
-        if (bytes === 0) return '0 KB';
-        const k = 1024;
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    // --- 存档系统功能结束 ---
 
     function renderPool() {
         const pool = document.getElementById('pool'); pool.innerHTML = "";
@@ -846,7 +581,7 @@
             showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题哦");
         }
         saveCurrentLayerSettings();
-        textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
+        textureLayers.push({ img: null, blob: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
         selectTextureLayer(textureLayers.length - 1);
     }
 
@@ -860,7 +595,7 @@
         if (targetDeleteTextureIndex === -1) return;
         
         if (textureLayers.length === 1) {
-            textureLayers[0] = { img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
+            textureLayers[0] = { img: null, blob: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
             currentTextureIndex = 0;
         } else {
             textureLayers.splice(targetDeleteTextureIndex, 1);
@@ -884,7 +619,9 @@
 
     document.getElementById('textureInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
-            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(e.target.files[0]));
+            const file = e.target.files[0];
+            textureLayers[currentTextureIndex].blob = file;
+            textureLayers[currentTextureIndex].img = await loadImage(URL.createObjectURL(file));
             updateTexturePreview();
         }
         e.target.value = "";
@@ -892,7 +629,9 @@
 
     document.getElementById('stickerInput').onchange = async (e) => {
         if(e.target.files.length > 0) {
-            customStickerImg = await loadImage(URL.createObjectURL(e.target.files[0]));
+            const file = e.target.files[0];
+            customStickerBlob = file;
+            customStickerImg = await loadImage(URL.createObjectURL(file));
             updateStickerPreview();
         }
         e.target.value = "";
@@ -1270,6 +1009,275 @@
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
+    // ------------------- 新增功能：存档管理系统逻辑 -------------------
+    function renderArchiveList() {
+        const container = document.getElementById('archiveListContainer');
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (archiveList.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--section-header); font-size: 0.8rem; padding: 20px 0;">暂无任何存档记录</div>';
+            selectedArchiveIndex = -1;
+            return;
+        }
+
+        archiveList.forEach((arch, idx) => {
+            const item = document.createElement('div');
+            item.className = `archive-item ${idx === selectedArchiveIndex ? 'selected' : ''}`;
+            item.onclick = () => {
+                selectedArchiveIndex = idx;
+                renderArchiveList();
+            };
+
+            const info = document.createElement('div');
+            info.className = 'archive-info';
+
+            const name = document.createElement('div');
+            name.className = 'archive-name';
+            name.innerText = arch.name || `存档 #${idx + 1}`;
+            info.appendChild(name);
+
+            const meta = document.createElement('div');
+            meta.className = 'archive-meta';
+            const sizeStr = formatBytes(arch.size || 0);
+            const contentTypes = [];
+            if (arch.hasImages) contentTypes.push("图片数据");
+            if (arch.hasSettings) contentTypes.push("参数设置");
+            meta.innerText = `${arch.time} | 包含: [${contentTypes.join('+')}] | 大小: ${sizeStr}`;
+            info.appendChild(meta);
+
+            item.appendChild(info);
+
+            const delBtn = document.createElement('div');
+            delBtn.className = 'archive-del-btn';
+            delBtn.innerHTML = '&times;';
+            delBtn.title = "删除当前存档";
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                requestDeleteArchive(idx);
+            };
+            item.appendChild(delBtn);
+
+            container.appendChild(item);
+        });
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function openCreateArchiveModal() {
+        document.getElementById('archiveNameInput').value = "";
+        document.getElementById('createArchiveModal').style.display = 'flex';
+    }
+
+    async function confirmCreateArchive() {
+        const name = document.getElementById('archiveNameInput').value.trim() || `存档 ${new Date().toLocaleDateString()}`;
+        const saveImg = document.getElementById('saveImgCheck').checked;
+        const saveSet = document.getElementById('saveSetCheck').checked;
+
+        if (!saveImg && !saveSet) {
+            showModalAlert("请至少勾选一项保存内容 (图片或设置)");
+            return;
+        }
+
+        saveCurrentLayerSettings();
+
+        const archiveObj = {
+            name: name,
+            time: new Date().toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}),
+            hasImages: saveImg,
+            hasSettings: saveSet,
+            size: 0,
+            images: null,
+            settings: null
+        };
+
+        let calculatedSize = 0;
+
+        if (saveImg) {
+            archiveObj.images = {
+                currentFiles: currentFiles.slice(),
+                customStickerBlob: customStickerBlob,
+                textureBlobs: textureLayers.map(l => l.blob)
+            };
+            currentFiles.forEach(f => { if(f && f.size) calculatedSize += f.size; });
+            if (customStickerBlob && customStickerBlob.size) calculatedSize += customStickerBlob.size;
+            textureLayers.forEach(l => { if(l.blob && l.blob.size) calculatedSize += l.blob.size; });
+        }
+
+        if (saveSet) {
+            archiveObj.settings = {
+                themeSelect: document.getElementById('themeSelector').value,
+                ratioSelect: document.getElementById('ratioSelect').value,
+                ratioW: document.getElementById('ratioW').value,
+                ratioH: document.getElementById('ratioH').value,
+                rows: document.getElementById('rows').value,
+                cols: document.getElementById('cols').value,
+                quality: document.getElementById('quality').value,
+                numEnable: document.getElementById('numEnable').checked,
+                startNum: document.getElementById('startNum').value,
+                fontFamily: document.getElementById('fontFamily').value,
+                fAlpha: document.getElementById('fAlpha').value,
+                fColor: document.getElementById('fColor').value,
+                sEnable: document.getElementById('sEnable').checked,
+                sWidth: document.getElementById('sWidth').value,
+                sAlpha: document.getElementById('sAlpha').value,
+                sColor: document.getElementById('sColor').value,
+                shEnable: document.getElementById('shEnable').checked,
+                shAlpha: document.getElementById('shAlpha').value,
+                shColor: document.getElementById('shColor').value,
+                pos: document.getElementById('pos').value,
+                fSize: document.getElementById('fSize').value,
+                textureEnable: document.getElementById('textureEnable').checked,
+                textureLayersMeta: textureLayers.map(l => ({ scope: l.scope, blendMode: l.blendMode, alpha: l.alpha })),
+                soldEnable: document.getElementById('soldEnable').checked,
+                soldRemainingMode: document.getElementById('soldRemainingMode').checked,
+                soldNumbers: document.getElementById('soldNumbers').value,
+                soldNumEnable: document.getElementById('soldNumEnable').checked,
+                stickerEnable: document.getElementById('stickerEnable').checked,
+                stickerSize: document.getElementById('stickerSize').value,
+                stickerAlpha: document.getElementById('stickerAlpha').value
+            };
+            calculatedSize += 2048; // 估算参数JSON体积
+        }
+
+        archiveObj.size = calculatedSize;
+        archiveList.unshift(archiveObj); // 新建存档顶格放置
+        selectedArchiveIndex = 0;
+        
+        saveArchivesToDB();
+        closeModal('createArchiveModal');
+    }
+
+    async function restoreSelectedArchive() {
+        if (selectedArchiveIndex === -1 || !archiveList[selectedArchiveIndex]) {
+            showModalAlert("请在下方列表中先点击选中一个要恢复的存档");
+            return;
+        }
+        const arch = archiveList[selectedArchiveIndex];
+
+        if (arch.hasImages && arch.images) {
+            currentFiles = arch.images.currentFiles ? arch.images.currentFiles.slice() : [];
+            customStickerBlob = arch.images.customStickerBlob || null;
+            if (customStickerBlob) {
+                customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+            } else {
+                customStickerImg = null;
+            }
+            saveToDB();
+        }
+
+        if (arch.hasSettings && arch.settings) {
+            const s = arch.settings;
+            document.getElementById('themeSelector').value = s.themeSelect;
+            changeTheme();
+
+            document.getElementById('ratioSelect').value = s.ratioSelect;
+            toggleRatioInput();
+            document.getElementById('ratioW').value = s.ratioW;
+            document.getElementById('ratioH').value = s.ratioH;
+            document.getElementById('rows').value = s.rows;
+            document.getElementById('cols').value = s.cols;
+            document.getElementById('quality').value = s.quality;
+
+            document.getElementById('numEnable').checked = s.numEnable;
+            document.getElementById('startNum').value = s.startNum;
+            document.getElementById('fontFamily').value = s.fontFamily;
+            document.getElementById('fAlpha').value = s.fAlpha;
+            document.getElementById('fColor').value = s.fColor;
+            document.getElementById('sEnable').checked = s.sEnable;
+            document.getElementById('sWidth').value = s.sWidth;
+            document.getElementById('sAlpha').value = s.sAlpha;
+            document.getElementById('sColor').value = s.sColor;
+            document.getElementById('shEnable').checked = s.shEnable;
+            document.getElementById('shAlpha').value = s.shAlpha;
+            document.getElementById('shColor').value = s.shColor;
+            document.getElementById('pos').value = s.pos;
+            document.getElementById('fSize').value = s.fSize;
+
+            document.getElementById('soldEnable').checked = s.soldEnable;
+            document.getElementById('soldRemainingMode').checked = s.soldRemainingMode;
+            document.getElementById('soldNumbers').value = s.soldNumbers;
+            document.getElementById('soldNumEnable').checked = s.soldNumEnable;
+            document.getElementById('stickerEnable').checked = s.stickerEnable;
+            document.getElementById('stickerSize').value = s.stickerSize;
+            document.getElementById('stickerAlpha').value = s.stickerAlpha;
+
+            document.getElementById('textureEnable').checked = s.textureEnable;
+            
+            if (s.textureLayersMeta && s.textureLayersMeta.length > 0) {
+                textureLayers = [];
+                for (let i = 0; i < s.textureLayersMeta.length; i++) {
+                    const meta = s.textureLayersMeta[i];
+                    let blob = (arch.hasImages && arch.images && arch.images.textureBlobs) ? arch.images.textureBlobs[i] : null;
+                    let img = blob ? await loadImage(URL.createObjectURL(blob)) : null;
+                    textureLayers.push({
+                        img: img,
+                        blob: blob,
+                        scope: meta.scope,
+                        blendMode: meta.blendMode,
+                        alpha: meta.alpha
+                    });
+                }
+                currentTextureIndex = 0;
+                selectTextureLayer(0);
+            }
+
+            initToggles();
+        } else if (arch.hasImages && arch.images && arch.images.textureBlobs) {
+            for (let i = 0; i < textureLayers.length; i++) {
+                let blob = arch.images.textureBlobs[i];
+                if (blob) {
+                    textureLayers[i].blob = blob;
+                    textureLayers[i].img = await loadImage(URL.createObjectURL(blob));
+                }
+            }
+            updateTexturePreview();
+            updateStickerPreview();
+        }
+
+        updatePreview();
+        showModalAlert(`已成功恢复存档：“${arch.name}”`);
+    }
+
+    function requestDeleteArchive(index) {
+        const arch = archiveList[index];
+        if (!arch) return;
+        document.getElementById('archiveConfirmTitle').innerText = "删除当前存档";
+        document.getElementById('archiveConfirmText').innerText = `是否要彻底删除存档：“${arch.name}”？`;
+        const btn = document.getElementById('archiveConfirmBtn');
+        btn.onclick = () => {
+            archiveList.splice(index, 1);
+            if (selectedArchiveIndex === index) selectedArchiveIndex = -1;
+            else if (selectedArchiveIndex > index) selectedArchiveIndex--;
+            saveArchivesToDB();
+            closeModal('archiveConfirmModal');
+        };
+        document.getElementById('archiveConfirmModal').style.display = 'flex';
+    }
+
+    function requestClearAllArchives() {
+        if (archiveList.length === 0) {
+            showModalAlert("当前没有可清空的存档数据");
+            return;
+        }
+        document.getElementById('archiveConfirmTitle').innerText = "二次提醒：清空所有记录";
+        document.getElementById('archiveConfirmText').innerText = "警告：此操作将永久清空列表中的所有存档数据且不可恢复，确定要继续吗？";
+        const btn = document.getElementById('archiveConfirmBtn');
+        btn.onclick = () => {
+            archiveList = [];
+            selectedArchiveIndex = -1;
+            saveArchivesToDB();
+            closeModal('archiveConfirmModal');
+        };
+        document.getElementById('archiveConfirmModal').style.display = 'flex';
+    }
+
     function initToggles() {
         toggleNumSection();
         toggleStrokeSection();
