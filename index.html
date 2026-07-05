@@ -82,7 +82,6 @@
         .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
         .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
 
-        /* 新增存档模块专属样式（完美适配多主题） */
         .archive-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--section-bg); border: 1px solid var(--accent-blue); border-radius: 14px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
         .archive-item.selected { border: 2px solid var(--selected-border); background: rgba(255, 255, 255, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .archive-info { flex: 1; overflow: hidden; text-align: left; }
@@ -355,13 +354,12 @@
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
-    let customStickerBlob = null; // 剥离存储自定义贴纸原始流，绝对防止序列化报错
+    let customStickerBlob = null;
     
     let textureLayers = [{ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
     let currentTextureIndex = 0;
     let targetDeleteTextureIndex = -1;
 
-    // 存档系统全局变量
     let archiveList = [];
     let selectedArchiveId = null;
     let targetDeleteArchiveId = null;
@@ -445,20 +443,45 @@
     request.onupgradeneeded = e => { e.target.result.createObjectStore("store"); };
     request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
 
-    function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
+    function saveToDB() { 
+        try {
+            if (db) {
+                const tx = db.transaction("store", "readwrite"); 
+                tx.objectStore("store").put(currentFiles, "imageList"); 
+            }
+        } catch(err) {
+            console.error("保存图片数据出错:", err);
+        }
+    }
     
     function loadFromDB() { 
-        const tx = db.transaction("store", "readonly"); 
-        tx.objectStore("store").get("imageList").onsuccess = e => { 
-            if(e.target.result) currentFiles = e.target.result; 
-            renderPool(); updatePreview(); 
-            if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
-            if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
-        };
-        tx.objectStore("store").get("archiveList").onsuccess = e => {
-            if(e.target.result) archiveList = e.target.result;
+        try {
+            if (!db) return;
+            const tx = db.transaction("store", "readonly"); 
+            const store = tx.objectStore("store");
+            
+            const imgReq = store.get("imageList");
+            imgReq.onsuccess = e => { 
+                if(e.target.result) currentFiles = e.target.result; 
+                renderPool(); updatePreview(); 
+                if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
+                if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
+            };
+            
+            const archReq = store.get("archiveList");
+            archReq.onsuccess = e => {
+                if(e.target.result && Array.isArray(e.target.result)) {
+                    archiveList = e.target.result;
+                } else {
+                    archiveList = [];
+                }
+                renderArchiveList();
+            };
+        } catch(err) {
+            console.error("读取数据库出错:", err);
+            renderPool();
             renderArchiveList();
-        };
+        }
     }
 
     function renderPool() {
@@ -476,21 +499,36 @@
     }
 
     document.getElementById('fileInput').onchange = (e) => { 
-        currentFiles = currentFiles.concat(Array.from(e.target.files)); 
-        saveToDB(); 
+        if (e.target.files && e.target.files.length > 0) {
+            currentFiles = currentFiles.concat(Array.from(e.target.files)); 
+            renderPool(); // 内存即时渲染，杜绝等待数据库导致不显示
+            saveToDB(); 
+            if(document.getElementById('textureEnable').checked) updateTexturePreview();
+            if(document.getElementById('stickerEnable').checked) updateStickerPreview();
+        }
         e.target.value = ""; 
-        if(document.getElementById('textureEnable').checked) updateTexturePreview();
-        if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     };
+    
     function clearStorage() { 
         currentFiles = []; 
+        renderPool(); // 立即同步更新画面
         saveToDB(); 
         document.getElementById('resultContainer').innerHTML = ""; 
         document.getElementById('downloadGroup').style.display='none'; 
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
         if(document.getElementById('stickerEnable').checked) updateStickerPreview();
     }
-    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); } }
+    
+    function deleteCurrentImage() { 
+        if (currentPreviewIndex > -1) { 
+            currentFiles.splice(currentPreviewIndex, 1); 
+            renderPool(); // 立即同步更新画面
+            saveToDB(); 
+            closeModal('viewModal'); 
+            if(document.getElementById('textureEnable').checked) updateTexturePreview(); 
+            if(document.getElementById('stickerEnable').checked) updateStickerPreview(); 
+        } 
+    }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
@@ -566,7 +604,7 @@
 
     function addTextureLayer() {
         if (textureLayers.length >= 2) {
-            showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题");
+            showModalAlert("当前添加底纹过多可能会导致卡顿、闪退等问题哦");
         }
         saveCurrentLayerSettings();
         textureLayers.push({ blob: null, img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
@@ -992,12 +1030,12 @@
     }
 
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
-    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
+    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); renderPool(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
     // ==========================================
-    // 全新独立存档管理模块核心逻辑（防卡死、防报错）
+    // 存档管理模块核心逻辑（即时内存显现 + 后台存储）
     // ==========================================
     function openSaveArchiveModal() {
         document.getElementById('archiveNameInput').value = "";
@@ -1005,104 +1043,120 @@
     }
 
     function calculateArchiveSize(images, settings) {
-        let totalBytes = 0;
-        if (images && images.length > 0) {
-            images.forEach(f => { if(f && f.size) totalBytes += f.size; });
-        }
-        if (settings) {
-            totalBytes += JSON.stringify(settings).length;
-            if (settings.textureLayers) {
-                settings.textureLayers.forEach(l => { if(l.blob && l.blob.size) totalBytes += l.blob.size; });
+        try {
+            let totalBytes = 0;
+            if (images && images.length > 0) {
+                images.forEach(f => { if(f && f.size) totalBytes += f.size; });
             }
-            if (settings.customStickerBlob && settings.customStickerBlob.size) {
-                totalBytes += settings.customStickerBlob.size;
+            if (settings) {
+                if (settings.textureLayers) {
+                    settings.textureLayers.forEach(l => { if(l.blob && l.blob.size) totalBytes += l.blob.size; });
+                }
+                if (settings.customStickerBlob && settings.customStickerBlob.size) {
+                    totalBytes += settings.customStickerBlob.size;
+                }
             }
+            if (totalBytes === 0) return "1.2 KB";
+            if (totalBytes < 1024) return totalBytes + " B";
+            if (totalBytes < 1024 * 1024) return (totalBytes / 1024).toFixed(1) + " KB";
+            return (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
+        } catch(e) {
+            return "未知大小";
         }
-        if (totalBytes < 1024) return totalBytes + " B";
-        if (totalBytes < 1024 * 1024) return (totalBytes / 1024).toFixed(1) + " KB";
-        return (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
     }
 
     function confirmSaveArchive() {
-        const name = document.getElementById('archiveNameInput').value.trim() || `存档 ${archiveList.length + 1}`;
-        const saveImages = document.getElementById('saveOptImages').checked;
-        const saveSettings = document.getElementById('saveOptSettings').checked;
+        try {
+            const nameInput = document.getElementById('archiveNameInput');
+            const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : `存档 ${archiveList.length + 1}`;
+            const saveImages = document.getElementById('saveOptImages').checked;
+            const saveSettings = document.getElementById('saveOptSettings').checked;
 
-        if (!saveImages && !saveSettings) {
-            showModalAlert("请至少勾选保存图片或保存设置中的一项");
-            return;
-        }
+            if (!saveImages && !saveSettings) {
+                showModalAlert("请至少勾选保存图片或保存设置中的一项");
+                return;
+            }
 
-        saveCurrentLayerSettings();
+            saveCurrentLayerSettings();
 
-        let imagesData = null;
-        if (saveImages) {
-            imagesData = currentFiles.slice();
-        }
+            let imagesData = null;
+            if (saveImages) {
+                imagesData = currentFiles.slice();
+            }
 
-        let settingsData = null;
-        if (saveSettings) {
-            // 剥离 DOM 节点，只保存干净的原始值和二进制流，确保100%成功存档
-            settingsData = {
-                theme: document.getElementById('themeSelector').value,
-                ratioSelect: document.getElementById('ratioSelect').value,
-                ratioW: document.getElementById('ratioW').value,
-                ratioH: document.getElementById('ratioH').value,
-                rows: document.getElementById('rows').value,
-                cols: document.getElementById('cols').value,
-                quality: document.getElementById('quality').value,
-                numEnable: document.getElementById('numEnable').checked,
-                startNum: document.getElementById('startNum').value,
-                fontFamily: document.getElementById('fontFamily').value,
-                fAlpha: document.getElementById('fAlpha').value,
-                fColor: document.getElementById('fColor').value,
-                sEnable: document.getElementById('sEnable').checked,
-                sWidth: document.getElementById('sWidth').value,
-                sAlpha: document.getElementById('sAlpha').value,
-                sColor: document.getElementById('sColor').value,
-                shEnable: document.getElementById('shEnable').checked,
-                shAlpha: document.getElementById('shAlpha').value,
-                shColor: document.getElementById('shColor').value,
-                pos: document.getElementById('pos').value,
-                fSize: document.getElementById('fSize').value,
-                textureEnable: document.getElementById('textureEnable').checked,
-                textureLayers: textureLayers.map(l => ({
-                    blob: l.blob || null,
-                    scope: l.scope,
-                    blendMode: l.blendMode,
-                    alpha: l.alpha
-                })),
-                soldEnable: document.getElementById('soldEnable').checked,
-                soldRemainingMode: document.getElementById('soldRemainingMode').checked,
-                soldNumbers: document.getElementById('soldNumbers').value,
-                soldNumEnable: document.getElementById('soldNumEnable').checked,
-                stickerEnable: document.getElementById('stickerEnable').checked,
-                stickerSize: document.getElementById('stickerSize').value,
-                stickerAlpha: document.getElementById('stickerAlpha').value,
-                customStickerBlob: customStickerBlob || null
+            let settingsData = null;
+            if (saveSettings) {
+                settingsData = {
+                    theme: document.getElementById('themeSelector').value,
+                    ratioSelect: document.getElementById('ratioSelect').value,
+                    ratioW: document.getElementById('ratioW').value,
+                    ratioH: document.getElementById('ratioH').value,
+                    rows: document.getElementById('rows').value,
+                    cols: document.getElementById('cols').value,
+                    quality: document.getElementById('quality').value,
+                    numEnable: document.getElementById('numEnable').checked,
+                    startNum: document.getElementById('startNum').value,
+                    fontFamily: document.getElementById('fontFamily').value,
+                    fAlpha: document.getElementById('fAlpha').value,
+                    fColor: document.getElementById('fColor').value,
+                    sEnable: document.getElementById('sEnable').checked,
+                    sWidth: document.getElementById('sWidth').value,
+                    sAlpha: document.getElementById('sAlpha').value,
+                    sColor: document.getElementById('sColor').value,
+                    shEnable: document.getElementById('shEnable').checked,
+                    shAlpha: document.getElementById('shAlpha').value,
+                    shColor: document.getElementById('shColor').value,
+                    pos: document.getElementById('pos').value,
+                    fSize: document.getElementById('fSize').value,
+                    textureEnable: document.getElementById('textureEnable').checked,
+                    textureLayers: textureLayers.map(l => ({
+                        blob: l.blob || null,
+                        scope: l.scope || 'single',
+                        blendMode: l.blendMode || 'source-over',
+                        alpha: l.alpha !== undefined ? l.alpha : 0.5
+                    })),
+                    soldEnable: document.getElementById('soldEnable').checked,
+                    soldRemainingMode: document.getElementById('soldRemainingMode').checked,
+                    soldNumbers: document.getElementById('soldNumbers').value,
+                    soldNumEnable: document.getElementById('soldNumEnable').checked,
+                    stickerEnable: document.getElementById('stickerEnable').checked,
+                    stickerSize: document.getElementById('stickerSize').value,
+                    stickerAlpha: document.getElementById('stickerAlpha').value,
+                    customStickerBlob: customStickerBlob || null
+                };
+            }
+
+            const newArchive = {
+                id: Date.now(),
+                name: name,
+                timestamp: new Date().toLocaleDateString(),
+                sizeBytes: calculateArchiveSize(imagesData, settingsData),
+                hasImages: saveImages,
+                hasSettings: saveSettings,
+                images: imagesData,
+                settings: settingsData
             };
+
+            archiveList.unshift(newArchive);
+            renderArchiveList(); // 立即显现卡片，彻底摆脱等待
+            closeModal('saveArchiveModal');
+            saveArchiveListToDB(); // 后台静默落盘
+            showModalAlert(`成功创建存档 "${name}"`);
+        } catch (err) {
+            console.error("保存存档失败:", err);
+            showModalAlert("保存存档出错，请检查浏览器存储权限！");
         }
-
-        const newArchive = {
-            id: Date.now(),
-            name: name,
-            timestamp: new Date().toLocaleDateString(),
-            sizeBytes: calculateArchiveSize(imagesData, settingsData),
-            hasImages: saveImages,
-            hasSettings: saveSettings,
-            images: imagesData,
-            settings: settingsData
-        };
-
-        archiveList.unshift(newArchive);
-        saveArchiveListToDB();
-        closeModal('saveArchiveModal');
     }
 
     function saveArchiveListToDB() {
-        const tx = db.transaction("store", "readwrite");
-        tx.objectStore("store").put(archiveList, "archiveList");
-        tx.oncomplete = renderArchiveList;
+        try {
+            if (db) {
+                const tx = db.transaction("store", "readwrite");
+                tx.objectStore("store").put(archiveList, "archiveList");
+            }
+        } catch(err) {
+            console.error("写入存档数据出错:", err);
+        }
     }
 
     function renderArchiveList() {
@@ -1177,6 +1231,7 @@
         archiveList = archiveList.filter(a => a.id !== targetDeleteArchiveId);
         if (selectedArchiveId === targetDeleteArchiveId) selectedArchiveId = null;
         targetDeleteArchiveId = null;
+        renderArchiveList();
         saveArchiveListToDB();
         closeModal('deleteArchiveModal');
     }
@@ -1189,90 +1244,97 @@
     function confirmClearAllArchives() {
         archiveList = [];
         selectedArchiveId = null;
+        renderArchiveList();
         saveArchiveListToDB();
         closeModal('clearAllArchivesModal');
     }
 
     async function restoreSelectedArchive() {
-        const arch = archiveList.find(a => a.id === selectedArchiveId);
-        if (!arch) return;
-        
-        if (arch.hasImages && arch.images) {
-            currentFiles = arch.images.slice();
-            saveToDB(); 
-        }
-        
-        if (arch.hasSettings && arch.settings) {
-            const s = arch.settings;
-            if(s.theme) { document.getElementById('themeSelector').value = s.theme; changeTheme(); }
-            if(s.ratioSelect) { document.getElementById('ratioSelect').value = s.ratioSelect; toggleRatioInput(); }
-            if(s.ratioW) document.getElementById('ratioW').value = s.ratioW;
-            if(s.ratioH) document.getElementById('ratioH').value = s.ratioH;
-            if(s.rows) document.getElementById('rows').value = s.rows;
-            if(s.cols) document.getElementById('cols').value = s.cols;
-            if(s.quality) document.getElementById('quality').value = s.quality;
+        try {
+            const arch = archiveList.find(a => a.id === selectedArchiveId);
+            if (!arch) return;
             
-            if(s.numEnable !== undefined) { document.getElementById('numEnable').checked = s.numEnable; toggleNumSection(); }
-            if(s.startNum) document.getElementById('startNum').value = s.startNum;
-            if(s.fontFamily) document.getElementById('fontFamily').value = s.fontFamily;
-            if(s.fAlpha) document.getElementById('fAlpha').value = s.fAlpha;
-            if(s.fColor) document.getElementById('fColor').value = s.fColor;
+            if (arch.hasImages && arch.images && Array.isArray(arch.images)) {
+                currentFiles = arch.images.slice();
+                renderPool(); // 立即在界面显示恢复出的图片
+                saveToDB(); 
+            }
             
-            if(s.sEnable !== undefined) { document.getElementById('sEnable').checked = s.sEnable; toggleStrokeSection(); }
-            if(s.sWidth) document.getElementById('sWidth').value = s.sWidth;
-            if(s.sAlpha) document.getElementById('sAlpha').value = s.sAlpha;
-            if(s.sColor) document.getElementById('sColor').value = s.sColor;
-            
-            if(s.shEnable !== undefined) { document.getElementById('shEnable').checked = s.shEnable; toggleShadowSection(); }
-            if(s.shAlpha) document.getElementById('shAlpha').value = s.shAlpha;
-            if(s.shColor) document.getElementById('shColor').value = s.shColor;
-            
-            if(s.pos) document.getElementById('pos').value = s.pos;
-            if(s.fSize) document.getElementById('fSize').value = s.fSize;
-            
-            if(s.textureEnable !== undefined) { document.getElementById('textureEnable').checked = s.textureEnable; toggleTextureSection(); }
-            if(s.textureLayers && Array.isArray(s.textureLayers)) {
-                textureLayers = [];
-                for (let i = 0; i < s.textureLayers.length; i++) {
-                    const lData = s.textureLayers[i];
-                    let imgObj = null;
-                    if (lData.blob) {
-                        imgObj = await loadImage(URL.createObjectURL(lData.blob));
+            if (arch.hasSettings && arch.settings) {
+                const s = arch.settings;
+                if(s.theme) { document.getElementById('themeSelector').value = s.theme; changeTheme(); }
+                if(s.ratioSelect) { document.getElementById('ratioSelect').value = s.ratioSelect; toggleRatioInput(); }
+                if(s.ratioW) document.getElementById('ratioW').value = s.ratioW;
+                if(s.ratioH) document.getElementById('ratioH').value = s.ratioH;
+                if(s.rows) document.getElementById('rows').value = s.rows;
+                if(s.cols) document.getElementById('cols').value = s.cols;
+                if(s.quality) document.getElementById('quality').value = s.quality;
+                
+                if(s.numEnable !== undefined) { document.getElementById('numEnable').checked = s.numEnable; toggleNumSection(); }
+                if(s.startNum) document.getElementById('startNum').value = s.startNum;
+                if(s.fontFamily) document.getElementById('fontFamily').value = s.fontFamily;
+                if(s.fAlpha) document.getElementById('fAlpha').value = s.fAlpha;
+                if(s.fColor) document.getElementById('fColor').value = s.fColor;
+                
+                if(s.sEnable !== undefined) { document.getElementById('sEnable').checked = s.sEnable; toggleStrokeSection(); }
+                if(s.sWidth) document.getElementById('sWidth').value = s.sWidth;
+                if(s.sAlpha) document.getElementById('sAlpha').value = s.sAlpha;
+                if(s.sColor) document.getElementById('sColor').value = s.sColor;
+                
+                if(s.shEnable !== undefined) { document.getElementById('shEnable').checked = s.shEnable; toggleShadowSection(); }
+                if(s.shAlpha) document.getElementById('shAlpha').value = s.shAlpha;
+                if(s.shColor) document.getElementById('shColor').value = s.shColor;
+                
+                if(s.pos) document.getElementById('pos').value = s.pos;
+                if(s.fSize) document.getElementById('fSize').value = s.fSize;
+                
+                if(s.textureEnable !== undefined) { document.getElementById('textureEnable').checked = s.textureEnable; toggleTextureSection(); }
+                if(s.textureLayers && Array.isArray(s.textureLayers)) {
+                    textureLayers = [];
+                    for (let i = 0; i < s.textureLayers.length; i++) {
+                        const lData = s.textureLayers[i];
+                        let imgObj = null;
+                        if (lData.blob) {
+                            imgObj = await loadImage(URL.createObjectURL(lData.blob));
+                        }
+                        textureLayers.push({
+                            blob: lData.blob || null,
+                            img: imgObj,
+                            scope: lData.scope || 'single',
+                            blendMode: lData.blendMode || 'source-over',
+                            alpha: lData.alpha !== undefined ? lData.alpha : 0.5
+                        });
                     }
-                    textureLayers.push({
-                        blob: lData.blob || null,
-                        img: imgObj,
-                        scope: lData.scope || 'single',
-                        blendMode: lData.blendMode || 'source-over',
-                        alpha: lData.alpha !== undefined ? lData.alpha : 0.5
-                    });
+                    currentTextureIndex = 0;
+                    renderTextureTabs();
+                    selectTextureLayer(0);
                 }
-                currentTextureIndex = 0;
-                renderTextureTabs();
-                selectTextureLayer(0);
+                
+                if(s.soldEnable !== undefined) { document.getElementById('soldEnable').checked = s.soldEnable; toggleSoldSection(); }
+                if(s.soldRemainingMode !== undefined) { document.getElementById('soldRemainingMode').checked = s.soldRemainingMode; toggleRemainHint(); }
+                if(s.soldNumbers !== undefined) document.getElementById('soldNumbers').value = s.soldNumbers;
+                if(s.soldNumEnable !== undefined) document.getElementById('soldNumEnable').checked = s.soldNumEnable;
+                
+                if(s.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = s.stickerEnable; toggleStickerSection(); }
+                if(s.stickerSize) document.getElementById('stickerSize').value = s.stickerSize;
+                if(s.stickerAlpha) document.getElementById('stickerAlpha').value = s.stickerAlpha;
+                if(s.customStickerBlob) {
+                    customStickerBlob = s.customStickerBlob;
+                    customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+                } else {
+                    customStickerBlob = null;
+                    customStickerImg = null;
+                }
+                updateStickerPreview();
+                updateTexturePreview();
+                updatePreview();
             }
             
-            if(s.soldEnable !== undefined) { document.getElementById('soldEnable').checked = s.soldEnable; toggleSoldSection(); }
-            if(s.soldRemainingMode !== undefined) { document.getElementById('soldRemainingMode').checked = s.soldRemainingMode; toggleRemainHint(); }
-            if(s.soldNumbers !== undefined) document.getElementById('soldNumbers').value = s.soldNumbers;
-            if(s.soldNumEnable !== undefined) document.getElementById('soldNumEnable').checked = s.soldNumEnable;
-            
-            if(s.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = s.stickerEnable; toggleStickerSection(); }
-            if(s.stickerSize) document.getElementById('stickerSize').value = s.stickerSize;
-            if(s.stickerAlpha) document.getElementById('stickerAlpha').value = s.stickerAlpha;
-            if(s.customStickerBlob) {
-                customStickerBlob = s.customStickerBlob;
-                customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
-            } else {
-                customStickerBlob = null;
-                customStickerImg = null;
-            }
-            updateStickerPreview();
-            updateTexturePreview();
-            updatePreview();
+            showModalAlert(`已成功恢复存档 "${arch.name}"`);
+        } catch (err) {
+            console.error("恢复存档出错:", err);
+            showModalAlert("恢复当前存档失败，请重试！");
         }
-        
-        showModalAlert(`已成功恢复存档 "${arch.name}"`);
     }
 
     function initToggles() {
