@@ -73,11 +73,15 @@
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
 
-        /* 新增底纹多图层样式（自动适配所有主题配色） */
-        .texture-tabs-container { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0; width: 100%; scrollbar-width: thin; }
-        .texture-tab { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); border: 1px solid transparent; transition: all 0.2s; }
-        .texture-tab.active { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); border-color: var(--selected-border); font-weight: bold; }
-        .texture-tab-add { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; }
+        /* 优化底纹图层样式：精致胶囊、去滚动条、加叉号 */
+        .texture-tabs-container { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin: 2px 0 4px 0; width: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
+        .texture-tabs-container::-webkit-scrollbar { display: none; }
+        .texture-tab { position: relative; padding: 5px 24px 5px 12px; border-radius: 14px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; background: var(--section-bg); color: var(--text-brown); border: 1px solid var(--accent-blue); transition: all 0.2s; display: inline-flex; align-items: center; flex-shrink: 0; }
+        .texture-tab.active { background: var(--btn-swap-pink); color: var(--btn-swap-text, white); border-color: var(--selected-border); font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .texture-tab-close { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; opacity: 0.6; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
+        .texture-tab-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.15); color: #fff; }
+        .texture-tab.active .texture-tab-close:hover { background: rgba(255, 255, 255, 0.3); }
+        .texture-tab-add { padding: 4px 14px; border-radius: 14px; font-size: 0.85rem; cursor: pointer; background: var(--accent-blue); color: var(--gray-btn-text, var(--text-brown)); font-weight: bold; flex-shrink: 0; border: 1px dashed var(--btn-swap-pink); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -167,7 +171,7 @@
         <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 190px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 220px; height:auto; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px; min-width: 0;">
@@ -178,14 +182,14 @@
                     <div class="texture-tabs-container" id="textureTabsGroup"></div>
                     <div>
                         <label style="margin-bottom: 2px;">覆盖范围</label>
-                        <select id="textureScope" onchange="saveCurrentLayerSettings(); updateTexturePreview();" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureScope" onchange="saveCurrentLayerSettings(); updateTexturePreview();" style="padding: 6px; margin-bottom: 4px; border-radius: 8px;">
                             <option value="single">单图 (拼图前)</option>
                             <option value="global">全图 (拼图后)</option>
                         </select>
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">底纹效果</label>
-                        <select id="textureBlendMode" onchange="saveCurrentLayerSettings(); updateTexturePreview()" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureBlendMode" onchange="saveCurrentLayerSettings(); updateTexturePreview()" style="padding: 6px; margin-bottom: 4px; border-radius: 8px;">
                             <option value="source-over">正常</option>
                             <option value="multiply">正片叠底</option>
                             <option value="screen">滤色</option>
@@ -195,7 +199,7 @@
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">不透明度</label>
-                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="saveCurrentLayerSettings(); updateTexturePreview()" style="margin: 0 0 0 4px; width: 95%;">
+                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="saveCurrentLayerSettings(); updateTexturePreview()" style="margin: 4px 0 0 4px; width: 95%;">
                     </div>
                 </div>
             </div>
@@ -276,14 +280,25 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="deleteTextureModal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color: var(--text-brown);">删除底纹</h3>
+        <p id="deleteTextureText" style="margin: 15px 0; color: var(--text-brown); font-size: 0.95rem;"></p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main btn-swap" onclick="confirmDeleteTexture()">确定</button>
+            <button class="btn-main" style="background:var(--accent-blue); color:var(--gray-btn-text, var(--text-brown))" onclick="closeModal('deleteTextureModal')">取消</button>
+        </div>
+    </div>
+</div>
+
 <script>
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
     
-    // 新增多层底纹存储数组与索引
     let textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
     let currentTextureIndex = 0;
+    let targetDeleteTextureIndex = -1;
 
     const themes = {
         gray: {
@@ -418,7 +433,7 @@
         document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
     }
 
-    // 新增底纹图层渲染、选择与保存逻辑
+    // 渲染带有删除叉号的底纹胶囊标签
     function renderTextureTabs() {
         const container = document.getElementById('textureTabsGroup');
         if (!container) return;
@@ -427,7 +442,22 @@
         textureLayers.forEach((_, idx) => {
             const tab = document.createElement('div');
             tab.className = `texture-tab ${idx === currentTextureIndex ? 'active' : ''}`;
-            tab.innerText = `底纹${idx + 1}`;
+            
+            const span = document.createElement('span');
+            span.innerText = `底纹${idx + 1}`;
+            tab.appendChild(span);
+
+            // 右上角删除叉号（阻止冒泡）
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'texture-tab-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.title = "删除当前底纹";
+            closeBtn.onclick = (e) => {
+                e.stopPropagation(); 
+                requestDeleteTexture(idx);
+            };
+            tab.appendChild(closeBtn);
+
             tab.onclick = () => selectTextureLayer(idx);
             container.appendChild(tab);
         });
@@ -464,6 +494,34 @@
         saveCurrentLayerSettings();
         textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
         selectTextureLayer(textureLayers.length - 1);
+    }
+
+    function requestDeleteTexture(index) {
+        targetDeleteTextureIndex = index;
+        document.getElementById('deleteTextureText').innerText = `是否删除当前的“底纹${index + 1}”？`;
+        document.getElementById('deleteTextureModal').style.display = 'flex';
+    }
+
+    // 绝对连续不跳号的底纹删除逻辑
+    function confirmDeleteTexture() {
+        if (targetDeleteTextureIndex === -1) return;
+        
+        if (textureLayers.length === 1) {
+            // 只剩1层时，删除等同于重置为空白状态，保留图层1不报错
+            textureLayers[0] = { img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 };
+            currentTextureIndex = 0;
+        } else {
+            textureLayers.splice(targetDeleteTextureIndex, 1);
+            if (currentTextureIndex >= textureLayers.length) {
+                currentTextureIndex = textureLayers.length - 1;
+            } else if (currentTextureIndex > targetDeleteTextureIndex) {
+                currentTextureIndex--;
+            }
+        }
+        
+        closeModal('deleteTextureModal');
+        targetDeleteTextureIndex = -1;
+        selectTextureLayer(currentTextureIndex);
     }
 
     function showModalAlert(msg, title = "提示") {
@@ -657,7 +715,7 @@
 
     async function generate() {
         if (currentFiles.length === 0) return;
-        saveCurrentLayerSettings(); // 生成前确保保存了当前编辑图层参数
+        saveCurrentLayerSettings(); 
         const container = document.getElementById('resultContainer'); container.innerHTML = "";
         generatedCanvases = []; 
         const rows = parseInt(document.getElementById('rows').value), cols = parseInt(document.getElementById('cols').value);
@@ -718,7 +776,6 @@
                     
                     drawCover(ctx, img, x, y, itemW, itemH);
                     
-                    // 循环绘制每个为“单图”覆盖范围的底纹图层
                     if (document.getElementById('textureEnable').checked) {
                         textureLayers.forEach(layer => {
                             if (layer.img && layer.scope === 'single') {
@@ -779,7 +836,6 @@
                     }
                 }
 
-                // 循环绘制每个为“全图”覆盖范围的底纹图层
                 if (document.getElementById('textureEnable').checked) {
                     textureLayers.forEach(layer => {
                         if (layer.img && layer.scope === 'global') {
@@ -799,7 +855,6 @@
         document.getElementById('downloadGroup').style.display = 'block';
     }
 
-    // 修复单张下载漏图逻辑（增加为2500毫秒充足间隙）与完成后提示弹窗
     async function downloadAllSingle() {
         const q = parseInt(document.getElementById('quality').value) / 100;
         const total = generatedCanvases.length;
@@ -871,7 +926,7 @@
         toggleSoldSection();
         toggleStickerSection();
         toggleRemainHint();
-        renderTextureTabs(); // 初始化渲染底纹多图层
+        renderTextureTabs(); 
     }
     initToggles();
     
