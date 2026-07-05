@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <title>Kaki拼图工具-测试</title>
+    <title>Kaki拼图工具-测试版</title>
     <style>
         :root {
             --bg: #D7DEE4;            
@@ -87,7 +87,7 @@
                 <option value="mint">薄荷生巧</option>
                 <option value="rococo">洛可可粉</option>
                 <option value="darkPink">黑乳酪莓</option>
-                <option value="amethyst">烟灰紫晶</option>
+                <option value="amethyst">褪色鸢尾</option>
             </select>
         </div>
 
@@ -647,7 +647,7 @@
                     }
                     
                     let isSold = false;
-                    if(soldRawText !== "") {
+                    if(document.getElementById('soldEnable').checked && soldRawText !== "") {
                         isSold = isRemainMode ? !soldSet.has(currentNumber) : soldSet.has(currentNumber);
                     }
 
@@ -766,6 +766,17 @@
     function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
+    
+    function initToggles() {
+        toggleNumSection();
+        toggleStrokeSection();
+        toggleShadowSection();
+        toggleTextureSection();
+        toggleSoldSection();
+        toggleStickerSection();
+        toggleRemainHint();
+    }
+    initToggles();
     
     setTimeout(updatePreview, 100);
 </script>
