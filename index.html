@@ -449,39 +449,53 @@
                 const tx = db.transaction("store", "readwrite"); 
                 tx.objectStore("store").put(currentFiles, "imageList"); 
             }
-        } catch(err) {
-            console.error("保存图片数据出错:", err);
-        }
+        } catch(err) {}
     }
     
     function loadFromDB() { 
         try {
-            if (!db) return;
-            const tx = db.transaction("store", "readonly"); 
-            const store = tx.objectStore("store");
-            
-            const imgReq = store.get("imageList");
-            imgReq.onsuccess = e => { 
-                if(e.target.result) currentFiles = e.target.result; 
-                renderPool(); updatePreview(); 
-                if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
-                if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
-            };
-            
-            const archReq = store.get("archiveList");
-            archReq.onsuccess = e => {
-                if(e.target.result && Array.isArray(e.target.result)) {
-                    archiveList = e.target.result;
-                } else {
-                    archiveList = [];
-                }
-                renderArchiveList();
-            };
+            if (db) {
+                const tx = db.transaction("store", "readonly"); 
+                const store = tx.objectStore("store");
+                
+                const imgReq = store.get("imageList");
+                imgReq.onsuccess = e => { 
+                    if(e.target.result) currentFiles = e.target.result; 
+                    renderPool(); updatePreview(); 
+                    if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); 
+                    if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); 
+                };
+                
+                const archReq = store.get("archiveList");
+                archReq.onsuccess = e => {
+                    if(e.target.result && Array.isArray(e.target.result) && e.target.result.length > 0) {
+                        archiveList = e.target.result;
+                        renderArchiveList();
+                    } else {
+                        loadArchiveListFromLocalStorage();
+                    }
+                };
+                archReq.onerror = () => loadArchiveListFromLocalStorage();
+            } else {
+                loadArchiveListFromLocalStorage();
+            }
         } catch(err) {
-            console.error("读取数据库出错:", err);
+            loadArchiveListFromLocalStorage();
             renderPool();
-            renderArchiveList();
         }
+    }
+
+    function loadArchiveListFromLocalStorage() {
+        try {
+            const backup = localStorage.getItem("Kaki_ArchiveList_Backup");
+            if (backup) {
+                const parsed = JSON.parse(backup);
+                if (Array.isArray(parsed)) {
+                    archiveList = parsed;
+                    renderArchiveList();
+                }
+            }
+        } catch(e) {}
     }
 
     function renderPool() {
@@ -501,7 +515,7 @@
     document.getElementById('fileInput').onchange = (e) => { 
         if (e.target.files && e.target.files.length > 0) {
             currentFiles = currentFiles.concat(Array.from(e.target.files)); 
-            renderPool(); // 内存即时渲染，杜绝等待数据库导致不显示
+            renderPool(); 
             saveToDB(); 
             if(document.getElementById('textureEnable').checked) updateTexturePreview();
             if(document.getElementById('stickerEnable').checked) updateStickerPreview();
@@ -511,7 +525,7 @@
     
     function clearStorage() { 
         currentFiles = []; 
-        renderPool(); // 立即同步更新画面
+        renderPool(); 
         saveToDB(); 
         document.getElementById('resultContainer').innerHTML = ""; 
         document.getElementById('downloadGroup').style.display='none'; 
@@ -522,7 +536,7 @@
     function deleteCurrentImage() { 
         if (currentPreviewIndex > -1) { 
             currentFiles.splice(currentPreviewIndex, 1); 
-            renderPool(); // 立即同步更新画面
+            renderPool(); 
             saveToDB(); 
             closeModal('viewModal'); 
             if(document.getElementById('textureEnable').checked) updateTexturePreview(); 
@@ -1035,8 +1049,31 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
     // ==========================================
-    // 存档管理模块核心逻辑（即时内存显现 + 后台存储）
+    // Base64 纯文本序列化 & 双向保险存储引擎
     // ==========================================
+    function fileToDataURL(file) {
+        return new Promise((resolve) => {
+            if (!file) { resolve(null); return; }
+            if (typeof file === 'string') { resolve(file); return; }
+            try {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            } catch(e) { resolve(null); }
+        });
+    }
+
+    function dataURLtoFile(dataurl, filename = "image.png") {
+        if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return null;
+        try {
+            let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+            return new File([u8arr], filename, {type:mime});
+        } catch(e) { return null; }
+    }
+
     function openSaveArchiveModal() {
         document.getElementById('archiveNameInput').value = "";
         document.getElementById('saveArchiveModal').style.display = 'flex';
@@ -1046,26 +1083,22 @@
         try {
             let totalBytes = 0;
             if (images && images.length > 0) {
-                images.forEach(f => { if(f && f.size) totalBytes += f.size; });
+                images.forEach(f => { 
+                    if(typeof f === 'string') totalBytes += f.length;
+                    else if(f && f.size) totalBytes += f.size; 
+                });
             }
             if (settings) {
-                if (settings.textureLayers) {
-                    settings.textureLayers.forEach(l => { if(l.blob && l.blob.size) totalBytes += l.blob.size; });
-                }
-                if (settings.customStickerBlob && settings.customStickerBlob.size) {
-                    totalBytes += settings.customStickerBlob.size;
-                }
+                totalBytes += JSON.stringify(settings).length;
             }
             if (totalBytes === 0) return "1.2 KB";
             if (totalBytes < 1024) return totalBytes + " B";
             if (totalBytes < 1024 * 1024) return (totalBytes / 1024).toFixed(1) + " KB";
             return (totalBytes / (1024 * 1024)).toFixed(2) + " MB";
-        } catch(e) {
-            return "未知大小";
-        }
+        } catch(e) { return "未知大小"; }
     }
 
-    function confirmSaveArchive() {
+    async function confirmSaveArchive() {
         try {
             const nameInput = document.getElementById('archiveNameInput');
             const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : `存档 ${archiveList.length + 1}`;
@@ -1080,12 +1113,20 @@
             saveCurrentLayerSettings();
 
             let imagesData = null;
-            if (saveImages) {
-                imagesData = currentFiles.slice();
+            if (saveImages && currentFiles.length > 0) {
+                imagesData = await Promise.all(currentFiles.map(f => fileToDataURL(f)));
             }
 
             let settingsData = null;
             if (saveSettings) {
+                const layersData = await Promise.all(textureLayers.map(async (l) => ({
+                    dataUrl: await fileToDataURL(l.blob || l.dataUrl || null),
+                    scope: l.scope || 'single',
+                    blendMode: l.blendMode || 'source-over',
+                    alpha: l.alpha !== undefined ? l.alpha : 0.5
+                })));
+                const stickerDataUrl = await fileToDataURL(customStickerBlob || null);
+
                 settingsData = {
                     theme: document.getElementById('themeSelector').value,
                     ratioSelect: document.getElementById('ratioSelect').value,
@@ -1109,12 +1150,7 @@
                     pos: document.getElementById('pos').value,
                     fSize: document.getElementById('fSize').value,
                     textureEnable: document.getElementById('textureEnable').checked,
-                    textureLayers: textureLayers.map(l => ({
-                        blob: l.blob || null,
-                        scope: l.scope || 'single',
-                        blendMode: l.blendMode || 'source-over',
-                        alpha: l.alpha !== undefined ? l.alpha : 0.5
-                    })),
+                    textureLayers: layersData,
                     soldEnable: document.getElementById('soldEnable').checked,
                     soldRemainingMode: document.getElementById('soldRemainingMode').checked,
                     soldNumbers: document.getElementById('soldNumbers').value,
@@ -1122,7 +1158,7 @@
                     stickerEnable: document.getElementById('stickerEnable').checked,
                     stickerSize: document.getElementById('stickerSize').value,
                     stickerAlpha: document.getElementById('stickerAlpha').value,
-                    customStickerBlob: customStickerBlob || null
+                    customStickerDataUrl: stickerDataUrl
                 };
             }
 
@@ -1138,12 +1174,11 @@
             };
 
             archiveList.unshift(newArchive);
-            renderArchiveList(); // 立即显现卡片，彻底摆脱等待
+            renderArchiveList(); 
             closeModal('saveArchiveModal');
-            saveArchiveListToDB(); // 后台静默落盘
+            saveArchiveListToDB(); 
             showModalAlert(`成功创建存档 "${name}"`);
         } catch (err) {
-            console.error("保存存档失败:", err);
             showModalAlert("保存存档出错，请检查浏览器存储权限！");
         }
     }
@@ -1154,9 +1189,10 @@
                 const tx = db.transaction("store", "readwrite");
                 tx.objectStore("store").put(archiveList, "archiveList");
             }
-        } catch(err) {
-            console.error("写入存档数据出错:", err);
-        }
+            try {
+                localStorage.setItem("Kaki_ArchiveList_Backup", JSON.stringify(archiveList));
+            } catch(lsErr) {}
+        } catch(err) {}
     }
 
     function renderArchiveList() {
@@ -1255,8 +1291,13 @@
             if (!arch) return;
             
             if (arch.hasImages && arch.images && Array.isArray(arch.images)) {
-                currentFiles = arch.images.slice();
-                renderPool(); // 立即在界面显示恢复出的图片
+                currentFiles = arch.images.map((img, idx) => {
+                    if (typeof img === 'string' && img.startsWith('data:')) {
+                        return dataURLtoFile(img, `imported_${idx + 1}.png`);
+                    }
+                    return img;
+                }).filter(f => f !== null);
+                renderPool(); 
                 saveToDB(); 
             }
             
@@ -1294,11 +1335,20 @@
                     for (let i = 0; i < s.textureLayers.length; i++) {
                         const lData = s.textureLayers[i];
                         let imgObj = null;
-                        if (lData.blob) {
-                            imgObj = await loadImage(URL.createObjectURL(lData.blob));
+                        let fileBlob = null;
+                        const rawData = lData.dataUrl || lData.blob;
+                        if (rawData) {
+                            if (typeof rawData === 'string' && rawData.startsWith('data:')) {
+                                fileBlob = dataURLtoFile(rawData, `texture_${i+1}.png`);
+                                imgObj = await loadImage(rawData);
+                            } else {
+                                fileBlob = rawData;
+                                imgObj = await loadImage(URL.createObjectURL(rawData));
+                            }
                         }
                         textureLayers.push({
-                            blob: lData.blob || null,
+                            blob: fileBlob,
+                            dataUrl: typeof rawData === 'string' ? rawData : null,
                             img: imgObj,
                             scope: lData.scope || 'single',
                             blendMode: lData.blendMode || 'source-over',
@@ -1318,9 +1368,16 @@
                 if(s.stickerEnable !== undefined) { document.getElementById('stickerEnable').checked = s.stickerEnable; toggleStickerSection(); }
                 if(s.stickerSize) document.getElementById('stickerSize').value = s.stickerSize;
                 if(s.stickerAlpha) document.getElementById('stickerAlpha').value = s.stickerAlpha;
-                if(s.customStickerBlob) {
-                    customStickerBlob = s.customStickerBlob;
-                    customStickerImg = await loadImage(URL.createObjectURL(customStickerBlob));
+                
+                const rawSticker = s.customStickerDataUrl || s.customStickerBlob;
+                if(rawSticker) {
+                    if (typeof rawSticker === 'string' && rawSticker.startsWith('data:')) {
+                        customStickerBlob = dataURLtoFile(rawSticker, "sticker.png");
+                        customStickerImg = await loadImage(rawSticker);
+                    } else {
+                        customStickerBlob = rawSticker;
+                        customStickerImg = await loadImage(URL.createObjectURL(rawSticker));
+                    }
                 } else {
                     customStickerBlob = null;
                     customStickerImg = null;
@@ -1332,7 +1389,6 @@
             
             showModalAlert(`已成功恢复存档 "${arch.name}"`);
         } catch (err) {
-            console.error("恢复存档出错:", err);
             showModalAlert("恢复当前存档失败，请重试！");
         }
     }
