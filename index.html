@@ -62,7 +62,7 @@
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked::after { left: 22px; }
         .font-preview-box { height: 120px; background: var(--accent-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 10px; border: 1px dashed var(--btn-swap-pink); overflow: hidden; position: relative; transition: background 0.3s, border 0.3s; }
-        #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas { width: 100%; height: 100%; }
+        #previewCanvas, #stickerPreviewCanvas, #texturePreviewCanvas, #pricePreviewCanvas { width: 100%; height: 100%; }
         #resultContainer img { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay-bg); z-index: 1000; align-items: center; justify-content: center; }
@@ -72,6 +72,18 @@
         .btn-del { flex: 1; background: var(--btn-del-bg); color: white; transition: background 0.3s; } 
         .btn-flex-3 { flex: 3; }
         .btn-flex-1 { flex: 1; }
+
+        /* --- 新增功能样式：价格区间条目与多层底纹选项卡 --- */
+        .price-rule-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.4); padding: 8px; border-radius: 10px; border: 1px solid var(--accent-blue); }
+        .price-rule-row input { padding: 6px; font-size: 0.8rem; }
+        .btn-mini-del { background: var(--btn-del-bg); color: white; border: none; border-radius: 6px; width: 26px; height: 26px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        
+        .texture-tabs-wrapper { display: flex; gap: 5px; overflow-x: auto; margin: 6px 0; padding: 2px 0; max-width: 100%; scrollbar-width: thin; }
+        .texture-tab { padding: 4px 8px; background: var(--accent-blue); color: var(--text-brown); border-radius: 6px; font-size: 0.72rem; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px; border: 1px solid transparent; transition: all 0.2s; }
+        .texture-tab.active { background: var(--accent-pink); font-weight: bold; border-color: var(--selected-border); color: var(--btn-main-text, var(--text-brown)); }
+        .texture-tab-add { padding: 4px 10px; background: rgba(0,0,0,0.05); color: var(--text-brown); border: 1px dashed var(--accent-pink); border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .texture-tab-del { font-size: 0.7rem; opacity: 0.6; margin-left: 2px; }
+        .texture-tab-del:hover { opacity: 1; color: red; }
     </style>
 </head>
 <body>
@@ -159,26 +171,59 @@
         </div>
 
         <div class="section-block">
+            <div class="section-header"><span>价格调整</span><input type="checkbox" class="toggle-switch" id="priceEnable" onchange="togglePriceSection()"></div>
+            <div id="priceSettings" style="display:none;">
+                <div class="setting-row">
+                    <div style="flex:2"><label>价格字体</label><select id="priceFontFamily" onchange="updatePricePreview()"><option value="'Dancing Script', cursive">飘逸手写体</option><option value="'Palatino', 'Georgia', serif">复古衬线体</option><option value="sans-serif">系统黑体</option></select></div>
+                    <div style="flex:1"><label>不透明度</label><input type="range" id="priceAlpha" value="1" step="0.1" min="0" max="1" oninput="updatePricePreview()"></div>
+                    <div style="flex:0 0 45px; text-align:center"><label>颜色</label><input type="color" id="priceColor" value="#333333" oninput="updatePricePreview()"></div>
+                </div>
+
+                <div class="setting-row">
+                    <div style="flex:1"><label>价格格式</label><select id="priceFormat" onchange="updatePricePreview()"><option value="r">xx r</option><option value="rmb">xx rmb</option></select></div>
+                    <div style="flex:1"><label>价格位置</label><select id="pricePos" onchange="updatePricePreview()"><option value="lb">左下</option><option value="lt">左上</option><option value="rb">右下</option><option value="rt">右上</option><option value="cb">正下方</option></select></div>
+                </div>
+
+                <div class="setting-row">
+                    <div style="flex:1"><label>价格大小 (默认180)</label><input type="number" id="priceSize" value="180" oninput="updatePricePreview()"></div>
+                    <div style="flex:1"><label>倾斜角度 (-45° ~ 45°)</label><input type="range" id="priceAngle" value="20" min="-45" max="45" step="1" oninput="updatePricePreview()"></div>
+                </div>
+
+                <div class="sub-divider"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                    <label style="margin:0; font-weight:bold;">价格区间设置</label>
+                    <button class="file-label" style="border:none;" onclick="addPriceRule()">+ 添加价格区间</button>
+                </div>
+                <div id="priceRulesContainer"></div>
+                <div style="font-size: 0.7rem; color: var(--section-header); margin-bottom: 8px;">*编号范围示例: 1-20 或 21 或 22-30</div>
+
+                <div class="font-preview-box" id="pricePreviewBox"><canvas id="pricePreviewCanvas"></canvas></div>
+            </div>
+        </div>
+        <div class="section-block">
             <div class="section-header"><span>底纹设置</span><input type="checkbox" class="toggle-switch" id="textureEnable" onchange="toggleTextureSection()"></div>
             <div id="textureSettings" class="setting-row" style="display:none; align-items: stretch; margin-bottom: 0;">
-                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 190px; cursor: pointer;" onclick="openTextureModal()">
+                <div class="font-preview-box" id="texturePreviewBox" style="flex:1.4; margin-top:0; min-height: 220px; cursor: pointer;" onclick="openTextureModal()">
                     <canvas id="texturePreviewCanvas"></canvas>
                 </div>
                 <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-left:12px;">
-                    <div class="file-upload-wrapper" style="width:100%;">
-                        <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
-                        <input type="file" id="textureInput" accept="image/*">
+                    <div>
+                        <div class="file-upload-wrapper" style="width:100%;">
+                            <div class="file-label" style="text-align:center; display:block; padding: 6px;">导入底纹</div>
+                            <input type="file" id="textureInput" accept="image/*">
+                        </div>
+                        <div class="texture-tabs-wrapper" id="textureTabsContainer"></div>
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">覆盖范围</label>
-                        <select id="textureScope" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureScope" onchange="updateCurrentTextureLayer()" style="padding: 6px; margin-bottom: 2px;">
                             <option value="single">单图 (拼图前)</option>
                             <option value="global">全图 (拼图后)</option>
                         </select>
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">底纹效果</label>
-                        <select id="textureBlendMode" onchange="updateTexturePreview()" style="padding: 8px; margin-bottom: 2px;">
+                        <select id="textureBlendMode" onchange="updateCurrentTextureLayer()" style="padding: 6px; margin-bottom: 2px;">
                             <option value="source-over">正常</option>
                             <option value="multiply">正片叠底</option>
                             <option value="screen">滤色</option>
@@ -188,12 +233,11 @@
                     </div>
                     <div>
                         <label style="margin-bottom: 2px;">不透明度</label>
-                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateTexturePreview()" style="margin: 0 0 0 4px; width: 95%;">
+                        <input type="range" id="textureAlpha" value="0.5" step="0.1" min="0" max="1" oninput="updateCurrentTextureLayer()" style="margin: 0 0 0 4px; width: 95%;">
                     </div>
                 </div>
             </div>
         </div>
-
         <div class="section-block">
             <div class="section-header"><span>遮挡图片</span><input type="checkbox" class="toggle-switch" id="soldEnable" onchange="toggleSoldSection()"></div>
             <div id="soldSettings" style="display:none;">
@@ -265,7 +309,10 @@
     let db, currentFiles = [], isSwapMode = false, swapSelection = [], currentPreviewIndex = -1;
     let generatedCanvases = []; 
     let customStickerImg = null;
-    let customTextureImg = null; 
+    
+    // --- 升级：多层底纹状态数据 ---
+    let textureLayers = [{ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 }];
+    let activeTextureIndex = 0;
 
     const themes = {
         gray: {
@@ -347,7 +394,7 @@
     request.onsuccess = e => { db = e.target.result; loadFromDB(); changeTheme(); }; 
 
     function saveToDB() { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(currentFiles, "imageList"); tx.oncomplete = renderPool; }
-    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); }; }
+    function loadFromDB() { const tx = db.transaction("store", "readonly"); tx.objectStore("store").get("imageList").onsuccess = e => { if(e.target.result) currentFiles = e.target.result; renderPool(); updatePreview(); if(document.getElementById('textureEnable')?.checked) updateTexturePreview(); if(document.getElementById('stickerEnable')?.checked) updateStickerPreview(); if(document.getElementById('priceEnable')?.checked) updatePricePreview(); }; }
 
     function renderPool() {
         const pool = document.getElementById('pool'); pool.innerHTML = "";
@@ -369,6 +416,7 @@
         e.target.value = ""; 
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
         if(document.getElementById('stickerEnable').checked) updateStickerPreview();
+        if(document.getElementById('priceEnable').checked) updatePricePreview();
     };
     function clearStorage() { 
         currentFiles = []; 
@@ -377,8 +425,9 @@
         document.getElementById('downloadGroup').style.display='none'; 
         if(document.getElementById('textureEnable').checked) updateTexturePreview();
         if(document.getElementById('stickerEnable').checked) updateStickerPreview();
+        if(document.getElementById('priceEnable').checked) updatePricePreview();
     }
-    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); } }
+    function deleteCurrentImage() { if (currentPreviewIndex > -1) { currentFiles.splice(currentPreviewIndex, 1); saveToDB(); closeModal('viewModal'); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); if(document.getElementById('priceEnable').checked) updatePricePreview(); } }
 
     function toggleRatioInput() { document.getElementById('customRatioUI').style.display = (document.getElementById('ratioSelect').value === 'custom') ? 'grid' : 'none'; }
     function toggleNumSection() { document.getElementById('numSettings').style.display = document.getElementById('numEnable').checked ? 'block' : 'none'; updatePreview(); }
@@ -387,7 +436,10 @@
     
     function toggleTextureSection() { 
         document.getElementById('textureSettings').style.display = document.getElementById('textureEnable').checked ? 'flex' : 'none'; 
-        if(document.getElementById('textureEnable').checked) setTimeout(updateTexturePreview, 50);
+        if(document.getElementById('textureEnable').checked) {
+            renderTextureTabs();
+            setTimeout(updateTexturePreview, 50);
+        }
     }
     
     function toggleSoldSection() { document.getElementById('soldSettings').style.display = document.getElementById('soldEnable').checked ? 'block' : 'none'; }
@@ -400,9 +452,173 @@
         document.getElementById('remainHint').style.display = document.getElementById('soldRemainingMode').checked ? 'block' : 'none';
     }
 
+    // --- 要求一：价格模块控制逻辑 ---
+    function togglePriceSection() {
+        document.getElementById('priceSettings').style.display = document.getElementById('priceEnable').checked ? 'block' : 'none';
+        if (document.getElementById('priceEnable').checked) {
+            if (document.getElementById('priceRulesContainer').children.length === 0) {
+                addPriceRule('1-20', '4');
+            }
+            setTimeout(updatePricePreview, 50);
+        }
+    }
+
+    function addPriceRule(defaultRange = '', defaultPrice = '') {
+        const container = document.getElementById('priceRulesContainer');
+        const row = document.createElement('div');
+        row.className = 'price-rule-row';
+        row.innerHTML = `
+            <input type="text" placeholder="编号范围 (如 1-20)" style="flex:1.5" value="${defaultRange}" oninput="updatePricePreview()">
+            <input type="number" placeholder="价格 (如 4)" style="flex:1" value="${defaultPrice}" oninput="updatePricePreview()">
+            <button class="btn-mini-del" onclick="this.parentElement.remove(); updatePricePreview();">×</button>
+        `;
+        container.appendChild(row);
+        updatePricePreview();
+    }
+
+    function getPriceForNumber(num) {
+        const rows = document.querySelectorAll('.price-rule-row');
+        const format = document.getElementById('priceFormat').value;
+        for (let row of rows) {
+            const inputs = row.querySelectorAll('input');
+            const rangeStr = inputs[0].value.trim();
+            const priceVal = inputs[1].value.trim();
+            if (!rangeStr || !priceVal) continue;
+
+            const parts = rangeStr.replace(/[.、，。]/g, ',').replace(/[-—_~]/g, '-').split(',');
+            for (let p of parts) {
+                p = p.trim();
+                if (p.includes('-')) {
+                    let [start, end] = p.split('-').map(Number);
+                    if (!isNaN(start) && !isNaN(end) && num >= Math.min(start, end) && num <= Math.max(start, end)) {
+                        return priceVal + format;
+                    }
+                } else {
+                    if (Number(p) === num) return priceVal + format;
+                }
+            }
+        }
+        return null;
+    }
+
+    function updatePricePreview() {
+        const canvas = document.getElementById('pricePreviewCanvas');
+        const box = document.getElementById('pricePreviewBox');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        const format = document.getElementById('priceFormat').value;
+        const sampleText = "5" + format;
+        const fSize = parseInt(document.getElementById('priceSize').value) || 180;
+        const angle = parseInt(document.getElementById('priceAngle').value) || 0;
+        const previewRatio = rect.width / 1000;
+
+        drawPriceText(ctx, sampleText, rect.width, rect.height, fSize * previewRatio, angle, true);
+    }
+
+    function drawPriceText(ctx, text, w, h, size, angle, isPreview = false) {
+        const font = document.getElementById('priceFontFamily').value;
+        ctx.save();
+        ctx.font = `bold ${size}px ${font}`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        
+        const safetyPadding = (size * 0.5) + 30;
+        let cx, cy;
+        const pos = document.getElementById('pricePos').value;
+        if (isPreview) { cx = w / 2; cy = h / 2; } 
+        else {
+            if (pos === 'lt') { cx = safetyPadding; cy = safetyPadding; } 
+            else if (pos === 'rt') { cx = w - safetyPadding; cy = safetyPadding; }
+            else if (pos === 'lb') { cx = safetyPadding; cy = h - safetyPadding; } 
+            else if (pos === 'rb') { cx = w - safetyPadding; cy = h - safetyPadding; }
+            else if (pos === 'cb') { cx = w / 2; cy = h - safetyPadding; } 
+            else { cx = w/2; cy = h/2; }
+        }
+
+        ctx.translate(cx, cy);
+        ctx.rotate(angle * Math.PI / 180);
+        
+        const rgb = hexToRgb(document.getElementById('priceColor').value);
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${document.getElementById('priceAlpha').value})`;
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    }
+
+    // --- 要求二：多层底纹控制逻辑 ---
+    function renderTextureTabs() {
+        const container = document.getElementById('textureTabsContainer');
+        if (!container) return;
+        container.innerHTML = "";
+        textureLayers.forEach((layer, idx) => {
+            const tab = document.createElement('div');
+            tab.className = `texture-tab ${idx === activeTextureIndex ? 'active' : ''}`;
+            tab.onclick = () => switchTextureTab(idx);
+            tab.innerHTML = `<span>底纹${idx + 1}</span>`;
+            if (textureLayers.length > 1) {
+                const delBtn = document.createElement('span');
+                delBtn.className = 'texture-tab-del';
+                delBtn.innerText = '×';
+                delBtn.onclick = (e) => { e.stopPropagation(); removeTextureLayer(idx); };
+                tab.appendChild(delBtn);
+            }
+            container.appendChild(tab);
+        });
+        const addBtn = document.createElement('div');
+        addBtn.className = 'texture-tab-add';
+        addBtn.innerText = '+';
+        addBtn.onclick = addTextureLayer;
+        container.appendChild(addBtn);
+        syncTextureUI();
+    }
+
+    function switchTextureTab(idx) {
+        activeTextureIndex = idx;
+        renderTextureTabs();
+        updateTexturePreview();
+    }
+
+    function addTextureLayer() {
+        if (textureLayers.length === 2) {
+            alert("当前添加底纹过多可能会导致卡顿、闪退等问题哦");
+        }
+        textureLayers.push({ img: null, scope: 'single', blendMode: 'source-over', alpha: 0.5 });
+        activeTextureIndex = textureLayers.length - 1;
+        renderTextureTabs();
+        updateTexturePreview();
+    }
+
+    function removeTextureLayer(idx) {
+        textureLayers.splice(idx, 1);
+        if (activeTextureIndex >= textureLayers.length) activeTextureIndex = textureLayers.length - 1;
+        renderTextureTabs();
+        updateTexturePreview();
+    }
+
+    function syncTextureUI() {
+        const cur = textureLayers[activeTextureIndex];
+        if (!cur) return;
+        document.getElementById('textureScope').value = cur.scope;
+        document.getElementById('textureBlendMode').value = cur.blendMode;
+        document.getElementById('textureAlpha').value = cur.alpha;
+    }
+
+    function updateCurrentTextureLayer() {
+        const cur = textureLayers[activeTextureIndex];
+        if (!cur) return;
+        cur.scope = document.getElementById('textureScope').value;
+        cur.blendMode = document.getElementById('textureBlendMode').value;
+        cur.alpha = parseFloat(document.getElementById('textureAlpha').value);
+        updateTexturePreview();
+    }
+
     document.getElementById('textureInput').onchange = async (e) => {
-        if(e.target.files.length > 0) {
-            customTextureImg = await loadImage(URL.createObjectURL(e.target.files[0]));
+        if (e.target.files.length > 0) {
+            textureLayers[activeTextureIndex].img = await loadImage(URL.createObjectURL(e.target.files[0]));
             updateTexturePreview();
         }
         e.target.value = "";
@@ -442,13 +658,19 @@
             ctx.fillRect(0, 0, rect.width, rect.height);
         }
 
-        if (customTextureImg) {
-            ctx.save();
-            ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
-            ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
-            drawCover(ctx, customTextureImg, 0, 0, rect.width, rect.height);
-            ctx.restore();
-        } else {
+        let hasAnyTexture = false;
+        textureLayers.forEach(layer => {
+            if (layer.img) {
+                hasAnyTexture = true;
+                ctx.save();
+                ctx.globalCompositeOperation = layer.blendMode;
+                ctx.globalAlpha = layer.alpha;
+                drawCover(ctx, layer.img, 0, 0, rect.width, rect.height);
+                ctx.restore();
+            }
+        });
+
+        if (!hasAnyTexture) {
             ctx.fillStyle = "rgba(0,0,0,0.4)";
             ctx.font = "14px sans-serif";
             ctx.textAlign = "center";
@@ -586,7 +808,6 @@
         const soldSet = getSoldNumbers();
         const soldRawText = document.getElementById('soldNumbers').value.trim();
         const isRemainMode = document.getElementById('soldRemainingMode').checked;
-        const textureScope = document.getElementById('textureScope').value; 
 
         let imageGroups = [];
 
@@ -638,12 +859,17 @@
                     
                     drawCover(ctx, img, x, y, itemW, itemH);
                     
-                    if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'single') {
-                        ctx.save();
-                        ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
-                        ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
-                        drawCover(ctx, customTextureImg, x, y, itemW, itemH);
-                        ctx.restore();
+                    // --- 升级：多层底纹（单图范围层） ---
+                    if (document.getElementById('textureEnable').checked) {
+                        textureLayers.forEach(layer => {
+                            if (layer.img && layer.scope === 'single') {
+                                ctx.save();
+                                ctx.globalCompositeOperation = layer.blendMode;
+                                ctx.globalAlpha = layer.alpha;
+                                drawCover(ctx, layer.img, x, y, itemW, itemH);
+                                ctx.restore();
+                            }
+                        });
                     }
                     
                     let isSold = false;
@@ -692,14 +918,31 @@
                         drawComplexText(ctx, currentNumber, itemW, itemH, parseInt(document.getElementById('fSize').value), sWidth);
                         ctx.restore();
                     }
+
+                    // --- 升级：价格绘制 ---
+                    if (document.getElementById('priceEnable').checked && (!isSold || document.getElementById('soldNumEnable').checked)) {
+                        const priceStr = getPriceForNumber(currentNumber);
+                        if (priceStr) {
+                            ctx.save(); ctx.translate(x, y);
+                            const pSize = parseInt(document.getElementById('priceSize').value) || 180;
+                            const pAngle = parseInt(document.getElementById('priceAngle').value) || 0;
+                            drawPriceText(ctx, priceStr, itemW, itemH, pSize, pAngle);
+                            ctx.restore();
+                        }
+                    }
                 }
 
-                if (document.getElementById('textureEnable').checked && customTextureImg && textureScope === 'global') {
-                    ctx.save();
-                    ctx.globalCompositeOperation = document.getElementById('textureBlendMode').value;
-                    ctx.globalAlpha = parseFloat(document.getElementById('textureAlpha').value);
-                    drawCover(ctx, customTextureImg, 0, 0, canvas.width, canvas.height);
-                    ctx.restore();
+                // --- 升级：多层底纹（全图范围层） ---
+                if (document.getElementById('textureEnable').checked) {
+                    textureLayers.forEach(layer => {
+                        if (layer.img && layer.scope === 'global') {
+                            ctx.save();
+                            ctx.globalCompositeOperation = layer.blendMode;
+                            ctx.globalAlpha = layer.alpha;
+                            drawCover(ctx, layer.img, 0, 0, canvas.width, canvas.height);
+                            ctx.restore();
+                        }
+                    });
                 }
 
                 generatedCanvases.push(canvas);
@@ -763,7 +1006,7 @@
     }
 
     function toggleSwapMode() { isSwapMode = !isSwapMode; swapSelection = []; renderPool(); document.getElementById('swapBtn').innerText = isSwapMode ? "请点击两张图" : "调换图片"; }
-    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); }
+    function confirmSwap() { const [i, j] = swapSelection; [currentFiles[i], currentFiles[j]] = [currentFiles[j], currentFiles[i]]; closeModal('swapModal'); exitSwapMode(); saveToDB(); if(document.getElementById('textureEnable').checked) updateTexturePreview(); if(document.getElementById('stickerEnable').checked) updateStickerPreview(); if(document.getElementById('priceEnable').checked) updatePricePreview(); }
     function exitSwapMode() { isSwapMode = false; document.getElementById('swapBtn').innerText = "调换图片"; swapSelection = []; renderPool(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='viewModal') currentPreviewIndex = -1; }
     
@@ -775,6 +1018,7 @@
         toggleSoldSection();
         toggleStickerSection();
         toggleRemainHint();
+        togglePriceSection();
     }
     initToggles();
     
